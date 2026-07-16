@@ -1,0 +1,44 @@
+name: Apply foundation bootstrap payload
+
+on:
+  push:
+    branches:
+      - agent/bootstrap-geo-contracts
+    paths:
+      - ".bootstrap/**"
+      - ".github/workflows/bootstrap-foundation.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    name: Apply generated foundation slice
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/bootstrap-geo-contracts
+          fetch-depth: 0
+
+      - name: Verify and extract payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .bootstrap/part-* | base64 --decode > /tmp/tdna-bootstrap.tar.xz
+          echo "70e076f250381445807e06fb6447a743ffdf25ab1ab98064e4047b5a9b388162  /tmp/tdna-bootstrap.tar.xz" | sha256sum --check -
+          tar -xJf /tmp/tdna-bootstrap.tar.xz
+          rm -rf .bootstrap
+          rm -f .github/workflows/bootstrap-foundation.yml
+
+      - name: Commit generated files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "feat: bootstrap canonical geo contracts"
+          git push origin HEAD:agent/bootstrap-geo-contracts
