@@ -19,7 +19,7 @@ Last updated: 2026-07-17
 
 ## Active slice
 
-**Canonical matched position and route progress tracker**
+**Canonical matched position and route progress tracker — substantive work complete, final gate pending**
 
 - issue [#17](https://github.com/kinderp/tdna/issues/17);
 - PR [#18](https://github.com/kinderp/tdna/pull/18);
@@ -30,49 +30,51 @@ Last updated: 2026-07-17
 - scenario `docs/it/lab/scenarios/route-progress-tracker.md`;
 - report `docs/project/daily/2026-07-17-route-progress.md`.
 
-## Implemented in the active slice
+## Implemented
 
 - canonical `RouteCoordinate` and `MatchedRoutePosition`;
 - independent sequence/time/route-progress checks;
-- stationary updates accepted and regressions rejected without mutation;
+- stationary accepted and regressions rejected without mutation;
 - deterministic active-leg boundary policy;
 - binary-search leg and maneuver lookup;
-- explicit `Arrive` tie-break at the final geometry point;
+- explicit `Arrive` tie-break;
 - public snapshot invariants;
 - route-overlay binding with full geometry verification at install time;
-- O(1) compact map progress projection;
+- compact `O(1)` map progress projection;
 - common/JVM/Linux tests;
 - deterministic Lab report;
 - multi-leg diagnostic benchmark with preprocessing outside the timer;
-- chapter, scenario and indexed pre-final report.
+- chapter, scenario, code map, tracepoints and indexed report.
 
-## Findings resolved before final review
+## Findings resolved
 
-1. linear leg/maneuver scans in a future hot path;
-2. same-ID overlay with different geometry not rejected;
-3. benchmark route without meaningful legs/maneuvers;
-4. tracker preprocessing included in the measured window;
-5. boundary leg/maneuver absent from Lab evidence;
-6. non-Arrive maneuver could be exposed after arrival;
+1. linear leg/maneuver scans;
+2. same-ID overlay with different geometry;
+3. unrepresentative benchmark route;
+4. tracker preprocessing inside the measured window;
+5. boundary result absent from Lab evidence;
+6. non-Arrive maneuver exposed after arrival;
 7. projector test omitted same-length altered geometry;
 8. intermediate Kotlin named-argument error caught by CI;
-9. generic tracepoint incorrectly claimed distance updates.
+9. tracepoint incorrectly claimed distance updates;
+10. stable README/feature status used merge-unstable PR wording.
 
 Every substantive fix reset the clean-review counter.
 
-## Current gates
+## Final gate
 
 - sole open PR: yes;
-- code and primary teaching documents: complete;
-- stable indexes/status: being finalized on the current branch;
-- CI on final substantive head: pending;
-- unresolved threads: none observed before final review;
+- code, tests, chapter, scenario, indexes and reports: complete;
+- benchmark artifact: recorded from CI #110;
+- final substantive SHA: determined by the commit containing this status record;
+- CI on that exact SHA: pending;
+- unresolved review threads: must be zero;
 - clean review rounds: `0 / 2`;
-- merge: not yet authorized by evidence until all gates pass.
+- merge: only after ready state and expected-head guard.
 
 ## Milestone still missing after this slice
 
-- real map matching or a separate fake map-matcher contract;
+- real map matching or a separate fake matcher;
 - missed-exit/off-route/reroute state machine;
 - Gradle Wrapper;
 - Android/iOS targets;
@@ -80,5 +82,4 @@ Every substantive fix reset the clean-review counter.
 
 ## Maintainer decisions
 
-None. Standing authorization permits autonomous merge only after the documented
-gates.
+None. Standing authorization permits autonomous merge only after all gates.

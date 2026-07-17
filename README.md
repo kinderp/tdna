@@ -28,9 +28,9 @@ La sequenza didattica implementation-backed comprende cinque slice:
 5. MatchedRoutePosition -> route progress -> manovra/arrival -> delta mappa
 ```
 
-La quinta slice è sviluppata nella PR attiva e diventa parte di `main` soltanto
-dopo CI verde e due review pulite sullo stesso SHA. Non esiste ancora un
-navigatore mobile di produzione.
+Questi sono laboratori e contratti di fondazione, non un navigatore mobile di
+produzione. Lo stato vivo di pubblicazione, CI e review è registrato in
+[development-status.md](docs/project/development-status.md) e nelle pull request.
 
 ## Laboratori
 

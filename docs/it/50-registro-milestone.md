@@ -38,7 +38,7 @@
 - PR [#18](https://github.com/kinderp/tdna/pull/18);
 - branch `agent/matched-route-progress`;
 - base `020f8495f7fbbae81f1463b098b0ddd2a079c873`;
-- stato **implementazione e documentazione pre-final-review**.
+- stato **substantive work complete; final CI and reviews pending**.
 
 Deliverable:
 
@@ -51,8 +51,8 @@ Deliverable:
 - [x] route-overlay binding verificato;
 - [x] compact map delta;
 - [x] Lab e benchmark multi-leg;
-- [x] chapter 47 e scenario;
-- [x] report pre-final-review;
+- [x] chapter 47, scenario e code map;
+- [x] tracepoint, indici e report;
 - [ ] CI verde sul final substantive head;
 - [ ] clean review round 1;
 - [ ] clean review round 2 sullo stesso SHA;

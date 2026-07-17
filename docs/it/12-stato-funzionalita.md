@@ -1,12 +1,13 @@
 # Stato delle funzionalità
 
 Questo documento distingue visione, contratto, laboratorio e capacità di
-prodotto.
+prodotto. Lo stato vivo di CI e merge è in
+[development-status.md](../project/development-status.md).
 
 ## Legenda
 
 - `documented`: comportamento descritto, nessun codice;
-- `executable lab`: codice, test/dati e comando eseguibili;
+- `executable lab`: codice, test/dati e comando eseguibili nel ramo che contiene il documento;
 - `prototype planned`: previsto nella milestone tecnica;
 - `future`: direzione approvata ma non pianificata ora;
 - `open`: richiede discussione o spike;
@@ -24,7 +25,7 @@ prodotto.
 | `LocationSample` e ordering gate | executable lab | Sequence e tempo monotono. |
 | Clock virtuale e replay | executable lab | Rate razionale, stato bounded e fixture ground truth. |
 | `MatchedRoutePosition` | executable lab | Output provider-neutral di un matcher futuro; non esegue matching. |
-| Route progress tracker | executable lab | Leg, manovra, arrival e rifiuti deterministici nella PR #18. |
+| Route progress tracker | executable lab | Leg, manovra, arrival e rifiuti deterministici. |
 | Route-progress map binding | executable lab | Geometria verificata all'installazione e update `O(1)`. |
 | Benchmark replay/progress | executable lab | JVM CI diagnostica, nessuna soglia o pretesa mobile. |
 | Tooling foundation | executable lab | Documentazione, architettura, Java, Rust e KMP. |
