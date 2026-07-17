@@ -119,7 +119,7 @@ class FakeMapRendererTest {
         assertEquals(FakeMapRenderer.Id.value, report.providerId)
         assertEquals(
             listOf(
-                "declares-map-boundary",
+                "declares-full-probe-capabilities",
                 "installs-scene",
                 "applies-route-progress",
                 "applies-marker-and-selection-deltas",
