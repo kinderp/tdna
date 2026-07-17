@@ -100,11 +100,18 @@ class MapContractsTest {
     }
 
     @Test
-    fun canonicalLocalStateErrorsCannotBeRetryable() {
+    fun localStateAndCapabilityErrorsCannotBeRetryable() {
         assertFailsWith<IllegalArgumentException> {
             MapRenderError(
                 code = MapRenderErrorCode.StaleScene,
                 message = "Stale scene",
+                retryable = true,
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            MapRenderError(
+                code = MapRenderErrorCode.UnsupportedOperation,
+                message = "Unsupported operation",
                 retryable = true,
             )
         }
