@@ -15,7 +15,12 @@ CHAR = re.compile(r"'(?:\\.|[^'\\])'")
 
 RULES = {
     "shared/plugin-sdk": ("kotlin.",),
-    "shared/routing-contracts": ("kotlin.", "org.traveldna.plugin.sdk."),
+    "shared/geo-contracts": ("kotlin.",),
+    "shared/routing-contracts": (
+        "kotlin.",
+        "org.traveldna.plugin.sdk.",
+        "org.traveldna.geo.contracts.",
+    ),
     "shared/routing-testkit": (
         "kotlin.",
         "org.traveldna.plugin.sdk.",
@@ -50,6 +55,14 @@ RULES = {
         "org.traveldna.routing.contracts.",
         "org.traveldna.map.contracts.",
     ),
+    "shared/location-contracts": (
+        "kotlin.",
+        "org.traveldna.geo.contracts.",
+    ),
+    "shared/location-replay": (
+        "kotlin.",
+        "org.traveldna.location.contracts.",
+    ),
 }
 FORBIDDEN_CODE_TOKENS = (
     "maplibre",
@@ -59,18 +72,14 @@ FORBIDDEN_CODE_TOKENS = (
     "waze",
     "sygic",
     "org.traveldna.reference.routing",
+    "android.location",
+    "corelocation",
+    "cllocation",
 )
 
 
 def strip_non_code(text: str) -> str:
-    """Remove comments and literals before scanning for fully qualified code use.
-
-    Imports are checked separately on the original source. This lightweight
-    sanitizer intentionally protects architecture comments such as "implemented
-    by MapLibre" while still finding provider tokens used in executable code.
-    It is not a Kotlin parser and is complemented by Gradle dependency checks in
-    future hardening work.
-    """
+    """Remove comments and literals before scanning for provider/platform use."""
 
     stripped = TRIPLE_STRING.sub('""', text)
     stripped = BLOCK_COMMENT.sub("", stripped)
@@ -98,7 +107,7 @@ def main(argv: list[str]) -> int:
             for token in FORBIDDEN_CODE_TOKENS:
                 if token in code_lower:
                     errors.append(
-                        f"{path.relative_to(root)}: forbidden provider/Lab code token: {token}"
+                        f"{path.relative_to(root)}: forbidden provider/platform code token: {token}"
                     )
             for imported in IMPORT.findall(text):
                 if not imported.startswith(prefixes):
