@@ -11,12 +11,13 @@
 
 | Stato | Documento | Nota |
 | --- | --- | --- |
-| Foundation complete | `00-regole-operative.md` | Costituzione operativa v0. |
+| Implementation-backed | `00-regole-operative.md` | Costituzione operativa con gate dei due round puliti. |
 | Foundation complete | `01-visione-prodotto.md` | Visione consolidata. |
 | Foundation complete | `02-glossario.md` | Glossario iniziale. |
 | Implementation-backed | `03-guida-lettura-documentazione.md` | Percorsi verso i Lab e la codebase. |
-| Foundation complete | `04-come-contribuire.md` | Flusso contributivo v0. |
+| Implementation-backed | `04-come-contribuire.md` | Flusso contributivo e gate di review. |
 | Foundation complete | `05-tracciabilita-conversazione.md` | Origine dei temi iniziali. |
+| Implementation-backed | `06-review-e-merge.md` | Substantive head, reset e due review consecutive. |
 | Foundation complete | `10-ddd-bounded-context.md` | Confini strategici v0. |
 | Foundation complete | `11-use-case-principali.md` | Use case prioritari. |
 | Implementation-backed | `12-stato-funzionalita.md` | Distingue Lab e prodotto. |
@@ -43,7 +44,7 @@
 | Implementation-backed | `43-reference-routing-java-rust.md` | Primo capitolo sostenuto da codice. |
 | Implementation-backed | `44-contratti-routing-e-fake-provider.md` | Contratti KMP, fake e testkit. |
 | Implementation-backed | `45-map-scene-e-fake-renderer.md` | Scena, delta, projector, fake e performance. |
-| Implementation-backed | `50-registro-milestone.md` | Milestone 1 e slice tracciate. |
+| Implementation-backed | `50-registro-milestone.md` | Milestone 1, governance e slice MapScene tracciate. |
 | Foundation complete | `51-roadmap-librerie-open-source.md` | Sostituzione progressiva. |
 | Foundation complete | `52-matrice-tecnologie-decisioni.md` | Scelte e alternative. |
 | Foundation complete | `53-riferimenti-tecnici.md` | Fonti ufficiali. |
@@ -57,6 +58,7 @@
 | Implementation-backed | `../project/daily/README.md` | Indice storico dei report. |
 | Implementation-backed | `../project/daily/2026-07-16.md` | Reference routing Java/Rust. |
 | Implementation-backed | `../project/daily/2026-07-17.md` | Contratti routing KMP e fake provider. |
+| Implementation-backed | `../project/daily/2026-07-17-review-policy.md` | Governance dei due round e hardening manovre. |
 | Implementation-backed | `../project/daily/2026-07-17-map-scene.md` | MapScene, fake renderer e projector. |
 | Implementation-backed | `lab/scenarios/reference-routing-java-rust.md` | Primo scenario eseguibile. |
 | Implementation-backed | `lab/scenarios/routing-contracts-fake-provider.md` | Secondo scenario eseguibile. |
