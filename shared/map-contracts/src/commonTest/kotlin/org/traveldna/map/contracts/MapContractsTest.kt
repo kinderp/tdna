@@ -79,6 +79,9 @@ class MapContractsTest {
             RouteOverlayProgress(0, Double.NaN)
         }
         assertFailsWith<IllegalArgumentException> {
+            RouteOverlayProgress(0, 1.0)
+        }
+        assertFailsWith<IllegalArgumentException> {
             MapSceneDelta.UpsertMarkers(
                 sceneId = MapSceneId("scene.delta"),
                 markers = emptyList(),
