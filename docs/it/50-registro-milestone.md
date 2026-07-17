@@ -10,8 +10,8 @@ dipendenze, risultati e lavoro rimandato.
 | Ordine | Milestone | Stato | Perché ora | Deliverable principali | Non-obiettivi |
 | --- | --- | --- | --- | --- | --- |
 | 0 | Documentation Foundation v0 | done | Fonte stabile prima del codice. | Regole, architettura, ADR, Lab e roadmap. | Codice mobile/backend. |
-| 1 | Foundations and Travel DNA Lab v0 | in-progress | Contratti e scenari prima degli SDK reali. | Multi-language build, canonical models, fakes, replay seed e CI. | GPS reale, MapLibre, Valhalla, chat. |
-| 2 | Canonical Route and Map Slice | planned | Verificare rendering e isolamento provider. | MapScene, fake renderer e adapter seed. | Turn-by-turn completo. |
+| 1 | Foundations and Travel DNA Lab v0 | in-progress | Contratti e scenari prima degli SDK reali. | Multi-language build, canonical models, fakes, replay seed e CI. | GPS reale, adapter MapLibre/Valhalla, chat. |
+| 2 | Canonical Route and Map Slice | planned | Verificare rendering reale e isolamento provider. | MapLibre adapter seed e benchmark. | Turn-by-turn completo. |
 | 3 | Navigation Runtime Replay v0 | planned | Ridurre il rischio guidance. | Clock, replay, off-route e reroute. | Traffico live. |
 | 4 | External Navigation Companion v0 | planned | Valore con navigatori maturi. | Handoff, shadow route e recorder. | Automotive completo. |
 | 5 | Journey Journal v0 | planned | Valore autonomo e dati per DNA. | Event store, soste, media fake e DailyPage. | Cloud media pubblico. |
@@ -49,15 +49,15 @@ Completati:
 ### Slice B — provider-neutral routing contracts
 
 - issue [#5](https://github.com/kinderp/tdna/issues/5);
-- PR draft [#6](https://github.com/kinderp/tdna/pull/6);
-- branch `agent/provider-neutral-routing-contracts`;
-- stato **review complete — merge pending**.
+- PR [#6](https://github.com/kinderp/tdna/pull/6);
+- stato **merged** il 17 luglio 2026;
+- merge commit `2a28d1654988cef4188986342f76fd7d19be358f`.
 
 Completati:
 
 - [x] Gradle/KMP bootstrap;
 - [x] JVM e Linux x64;
-- [x] plugin SDK e runtime platform semantics;
+- [x] plugin SDK;
 - [x] canonical routing models;
 - [x] immutable snapshots e bounded metadata;
 - [x] request/waypoint postconditions;
@@ -66,10 +66,32 @@ Completati:
 - [x] reusable conformance probe;
 - [x] architecture checker;
 - [x] CLI Lab;
-- [x] capitolo 44 e scenario;
-- [x] indice report giornalieri;
-- [x] CI completa verde, run `#19`;
-- [x] tre review round, ultimi senza finding bloccanti;
+- [x] capitolo 44, scenario e report;
+- [x] CI completa;
+- [x] merge.
+
+### Slice C — provider-neutral MapScene
+
+- issue [#7](https://github.com/kinderp/tdna/issues/7);
+- PR draft [#10](https://github.com/kinderp/tdna/pull/10);
+- branch `agent/provider-neutral-map-scene`;
+- stato **implementation and documentation in review**.
+
+Completati o in verifica:
+
+- [x] `MapScene`, camera, marker e route overlay;
+- [x] bounded `MapSceneDelta`;
+- [x] `MapRendererPort` e capability;
+- [x] fake renderer, snapshot e call history;
+- [x] renderer contract probe;
+- [x] route-to-overlay projector;
+- [x] executable map-scene Lab;
+- [x] privacy semantics per companion;
+- [x] progress canonico `[0, 1)`;
+- [x] architecture checker che ignora commenti/literal;
+- [x] capitolo 45, scenario e report;
+- [ ] CI finale sul substantive head;
+- [ ] due review round consecutivi senza finding;
 - [ ] merge.
 
 ### Criteri di chiusura milestone
@@ -79,13 +101,14 @@ Completati:
 - [x] canonical routing contract seed;
 - [x] plugin descriptor e capability;
 - [x] fake route planner;
+- [x] MapScene e fake renderer implementati in PR #10;
 - [ ] `LocationSample` e clock;
 - [ ] GPS replay;
-- [ ] MapScene e fake renderer;
 - [ ] missed-exit scenario;
 - [ ] benchmark report;
 - [ ] Gradle Wrapper;
-- [ ] documentazione finale milestone.
+- [ ] documentazione finale milestone;
+- [ ] merge PR #10.
 
 ## Regole
 
