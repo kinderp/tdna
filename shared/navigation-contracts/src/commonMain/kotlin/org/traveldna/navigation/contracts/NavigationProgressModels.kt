@@ -2,6 +2,7 @@ package org.traveldna.navigation.contracts
 
 import org.traveldna.location.contracts.LocationSequence
 import org.traveldna.location.contracts.MonotonicInstant
+import org.traveldna.routing.contracts.ManeuverType
 import org.traveldna.routing.contracts.RouteId
 import org.traveldna.routing.contracts.RouteManeuver
 
@@ -115,6 +116,12 @@ data class RouteProgressSnapshot(
 ) {
     init {
         require(activeLegIndex >= 0) { "active leg index must be non-negative" }
+        require(upcomingManeuver == null || upcomingManeuver.legIndex >= activeLegIndex) {
+            "upcoming maneuver cannot belong to a completed leg"
+        }
+        require(!arrived || upcomingManeuver == null || upcomingManeuver.maneuver.type == ManeuverType.Arrive) {
+            "an arrived snapshot may expose only an Arrive maneuver"
+        }
     }
 }
 

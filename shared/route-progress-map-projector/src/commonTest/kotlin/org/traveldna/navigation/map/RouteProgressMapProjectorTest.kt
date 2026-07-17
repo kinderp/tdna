@@ -14,20 +14,24 @@ import org.traveldna.navigation.contracts.MatchConfidence
 import org.traveldna.navigation.contracts.MatchedRoutePosition
 import org.traveldna.navigation.contracts.RouteCoordinate
 import org.traveldna.navigation.contracts.RouteProgressSnapshot
+import org.traveldna.plugin.sdk.PluginId
 import org.traveldna.routing.contracts.RouteId
+import org.traveldna.routing.contracts.RouteLeg
+import org.traveldna.routing.contracts.RoutePlan
+import org.traveldna.routing.contracts.RouteProvenance
 
 class RouteProgressMapProjectorTest {
     @Test
-    fun emitsCompactProgressForTheMatchingOverlay() {
-        val routeId = RouteId("projected-progress-route-v0")
-        val overlay = overlay(routeId)
-        val snapshot = snapshot(routeId)
-
-        val delta = RouteProgressMapProjector.project(
+    fun bindsCanonicalGeometryOnceAndEmitsCompactProgress() {
+        val route = route(RouteId("projected-progress-route-v0"))
+        val overlay = overlay(route.id, route.geometry)
+        val binding = RouteProgressMapProjector.bind(
             sceneId = MapSceneId("scene.progress-v0"),
             overlay = overlay,
-            snapshot = snapshot,
+            route = route,
         )
+
+        val delta = RouteProgressMapProjector.project(binding, snapshot(route.id))
 
         assertEquals(overlay.id, delta.routeOverlayId)
         assertEquals(1, delta.progress.completedGeometryIndex)
@@ -35,47 +39,73 @@ class RouteProgressMapProjectorTest {
     }
 
     @Test
-    fun rejectsAnotherRouteOrTruncatedOverlay() {
+    fun bindingRejectsAnotherRouteIdOrDifferentGeometryEvenWithTheSameLength() {
+        val route = route(RouteId("binding-route-v0"))
         assertFailsWith<IllegalArgumentException> {
-            RouteProgressMapProjector.project(
+            RouteProgressMapProjector.bind(
                 sceneId = MapSceneId("scene.progress-v0"),
-                overlay = overlay(RouteId("overlay-route-v0")),
-                snapshot = snapshot(RouteId("snapshot-route-v0")),
+                overlay = overlay(RouteId("other-route-v0"), route.geometry),
+                route = route,
             )
         }
-
-        val routeId = RouteId("truncated-progress-route-v0")
-        val truncated = RouteOverlay(
-            id = MapItemId("route.truncated"),
-            routeId = routeId,
-            geometry = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 0.01)),
-            role = RouteOverlayRole.Primary,
-        )
+        val altered = listOf(route.geometry[0], GeoPoint(0.0, 0.02), route.geometry[2])
         assertFailsWith<IllegalArgumentException> {
-            RouteProgressMapProjector.project(
+            RouteProgressMapProjector.bind(
                 sceneId = MapSceneId("scene.progress-v0"),
-                overlay = truncated,
-                snapshot = snapshot(routeId, geometryIndex = 2),
+                overlay = overlay(route.id, altered),
+                route = route,
             )
         }
     }
 
-    private fun overlay(routeId: RouteId): RouteOverlay = RouteOverlay(
+    @Test
+    fun projectRejectsASnapshotForAnotherBoundRoute() {
+        val route = route(RouteId("bound-route-v0"))
+        val binding = RouteProgressMapProjector.bind(
+            sceneId = MapSceneId("scene.progress-v0"),
+            overlay = overlay(route.id, route.geometry),
+            route = route,
+        )
+        assertFailsWith<IllegalArgumentException> {
+            RouteProgressMapProjector.project(binding, snapshot(RouteId("snapshot-route-v0")))
+        }
+    }
+
+    private fun route(routeId: RouteId): RoutePlan {
+        val geometry = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 0.01), GeoPoint(0.01, 0.01))
+        return RoutePlan(
+            id = routeId,
+            geometry = geometry,
+            legs = listOf(
+                RouteLeg(
+                    geometryStartIndex = 0,
+                    geometryEndIndex = 2,
+                    origin = geometry.first(),
+                    destination = geometry.last(),
+                    distanceMeters = 2_000L,
+                    durationSeconds = 120L,
+                    maneuvers = emptyList(),
+                ),
+            ),
+            distanceMeters = 2_000L,
+            durationSeconds = 120L,
+            provenance = RouteProvenance(PluginId("org.traveldna.progress-projector-test")),
+        )
+    }
+
+    private fun overlay(routeId: RouteId, geometry: List<GeoPoint>): RouteOverlay = RouteOverlay(
         id = MapItemId("route.progress"),
         routeId = routeId,
-        geometry = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 0.01), GeoPoint(0.01, 0.01)),
+        geometry = geometry,
         role = RouteOverlayRole.Primary,
     )
 
-    private fun snapshot(
-        routeId: RouteId,
-        geometryIndex: Int = 1,
-    ): RouteProgressSnapshot = RouteProgressSnapshot(
+    private fun snapshot(routeId: RouteId): RouteProgressSnapshot = RouteProgressSnapshot(
         position = MatchedRoutePosition(
             routeId = routeId,
             sampleSequence = LocationSequence(1),
             monotonicTime = MonotonicInstant(1_000L),
-            coordinate = RouteCoordinate(geometryIndex, 0.25),
+            coordinate = RouteCoordinate(1, 0.25),
             lateralDistanceMeters = 1.0,
             confidence = MatchConfidence.High,
         ),

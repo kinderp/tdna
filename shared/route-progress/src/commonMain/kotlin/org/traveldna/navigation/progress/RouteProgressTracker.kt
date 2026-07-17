@@ -5,6 +5,7 @@ import org.traveldna.navigation.contracts.RouteManeuverCursor
 import org.traveldna.navigation.contracts.RouteProgressDecision
 import org.traveldna.navigation.contracts.RouteProgressRejectionReason
 import org.traveldna.navigation.contracts.RouteProgressSnapshot
+import org.traveldna.routing.contracts.ManeuverType
 import org.traveldna.routing.contracts.RoutePlan
 
 /**
@@ -15,7 +16,7 @@ import org.traveldna.routing.contracts.RoutePlan
  * explicit rejections and never mutate accepted state.
  *
  * Leg and maneuver lookup use binary search, avoiding a full route scan for
- * every accepted sample.
+ * every accepted sample. Arrival-maneuver selection is prepared once.
  */
 class RouteProgressTracker(
     val route: RoutePlan,
@@ -24,6 +25,11 @@ class RouteProgressTracker(
         leg.maneuvers.mapIndexed { maneuverIndex, maneuver ->
             RouteManeuverCursor(legIndex, maneuverIndex, maneuver)
         }
+    }
+    private val arrivalManeuver: RouteManeuverCursor? = maneuverCursors.firstOrNull { cursor ->
+        cursor.legIndex == route.legs.lastIndex &&
+            cursor.maneuver.geometryIndex == route.geometry.lastIndex &&
+            cursor.maneuver.type == ManeuverType.Arrive
     }
 
     var lastSnapshot: RouteProgressSnapshot? = null
@@ -86,6 +92,7 @@ class RouteProgressTracker(
             activeLegIndex = activeLegIndex,
             completedGeometryIndex = coordinate.completedGeometryIndex,
             fractionToNext = coordinate.fractionToNext,
+            arrived = arrived,
         )
         return RouteProgressSnapshot(
             position = position,
@@ -118,7 +125,9 @@ class RouteProgressTracker(
         activeLegIndex: Int,
         completedGeometryIndex: Int,
         fractionToNext: Double,
+        arrived: Boolean,
     ): RouteManeuverCursor? {
+        if (arrived) return arrivalManeuver
         if (maneuverCursors.isEmpty()) return null
         val firstEligibleGeometryIndex = if (fractionToNext == 0.0) {
             completedGeometryIndex

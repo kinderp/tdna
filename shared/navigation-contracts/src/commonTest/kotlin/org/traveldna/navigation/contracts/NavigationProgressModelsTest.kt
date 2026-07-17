@@ -3,9 +3,12 @@ package org.traveldna.navigation.contracts
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import org.traveldna.geo.contracts.GeoPoint
 import org.traveldna.location.contracts.LocationSequence
 import org.traveldna.location.contracts.MonotonicInstant
+import org.traveldna.routing.contracts.ManeuverType
 import org.traveldna.routing.contracts.RouteId
+import org.traveldna.routing.contracts.RouteManeuver
 
 class NavigationProgressModelsTest {
     @Test
@@ -27,6 +30,34 @@ class NavigationProgressModelsTest {
             position(lateralDistanceMeters = MatchedRoutePosition.MaxLateralDistanceMeters + 1.0)
         }
         assertEquals(position(0.0), position(-0.0))
+    }
+
+    @Test
+    fun snapshotRejectsCompletedLegCursorsAndNonArrivalManeuversAfterArrival() {
+        val continueManeuver = RouteManeuver(
+            geometryIndex = 0,
+            type = ManeuverType.Continue,
+            location = GeoPoint(0.0, 0.0),
+            instruction = "Continue",
+        )
+        val cursor = RouteManeuverCursor(legIndex = 0, maneuverIndex = 0, maneuver = continueManeuver)
+
+        assertFailsWith<IllegalArgumentException> {
+            RouteProgressSnapshot(
+                position = position(0.0),
+                activeLegIndex = 1,
+                upcomingManeuver = cursor,
+                arrived = false,
+            )
+        }
+        assertFailsWith<IllegalArgumentException> {
+            RouteProgressSnapshot(
+                position = position(0.0),
+                activeLegIndex = 0,
+                upcomingManeuver = cursor,
+                arrived = true,
+            )
+        }
     }
 
     private fun position(lateralDistanceMeters: Double): MatchedRoutePosition = MatchedRoutePosition(

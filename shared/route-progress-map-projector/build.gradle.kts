@@ -12,6 +12,7 @@ kotlin {
             dependencies {
                 api(project(":shared:navigation-contracts"))
                 api(project(":shared:map-contracts"))
+                api(project(":shared:routing-contracts"))
             }
         }
         val commonTest by getting {

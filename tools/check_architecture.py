@@ -83,6 +83,7 @@ RULES = {
         "kotlin.",
         "org.traveldna.navigation.contracts.",
         "org.traveldna.map.contracts.",
+        "org.traveldna.routing.contracts.",
     ),
 }
 FORBIDDEN_CODE_TOKENS = (

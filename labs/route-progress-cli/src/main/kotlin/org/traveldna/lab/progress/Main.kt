@@ -77,11 +77,12 @@ private fun runLab() {
         geometry = route.geometry,
         role = RouteOverlayRole.Primary,
     )
-    val delta = RouteProgressMapProjector.project(
+    val mapBinding = RouteProgressMapProjector.bind(
         sceneId = MapSceneId("scene.reference-progress-v0"),
         overlay = overlay,
-        snapshot = finalSnapshot,
+        route = route,
     )
+    val delta = RouteProgressMapProjector.project(mapBinding, finalSnapshot)
     val finalManeuver = finalSnapshot.upcomingManeuver?.maneuver?.type?.name ?: "none"
 
     check(accepted == ExpectedAccepted)
@@ -123,11 +124,16 @@ private fun runBenchmark(sampleCount: Int, iterations: Int) {
     val positions = List(sampleCount) { index ->
         position(route.id, index.toLong(), index.toLong() * 100L, index, 0.0)
     }
+    val tracker = RouteProgressTracker(route)
 
-    repeat(BenchmarkWarmups) { runBenchmarkIteration(route, positions) }
+    repeat(BenchmarkWarmups) {
+        tracker.reset()
+        runBenchmarkIteration(tracker, positions)
+    }
     val elapsed = LongArray(iterations) {
+        tracker.reset()
         val started = System.nanoTime()
-        runBenchmarkIteration(route, positions)
+        runBenchmarkIteration(tracker, positions)
         System.nanoTime() - started
     }.sorted()
     val median = elapsed[elapsed.size / 2]
@@ -146,8 +152,10 @@ private fun runBenchmark(sampleCount: Int, iterations: Int) {
     )
 }
 
-private fun runBenchmarkIteration(route: RoutePlan, positions: List<MatchedRoutePosition>) {
-    val tracker = RouteProgressTracker(route)
+private fun runBenchmarkIteration(
+    tracker: RouteProgressTracker,
+    positions: List<MatchedRoutePosition>,
+) {
     positions.forEach { candidate -> check(tracker.accept(candidate) is RouteProgressDecision.Accepted) }
     check(tracker.lastSnapshot?.arrived == true)
 }

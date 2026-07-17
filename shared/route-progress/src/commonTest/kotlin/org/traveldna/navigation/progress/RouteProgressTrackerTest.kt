@@ -47,6 +47,15 @@ class RouteProgressTrackerTest {
     }
 
     @Test
+    fun arrivalPrefersArriveWhenAnotherFinalIndexManeuverComesFirst() {
+        val tracker = RouteProgressTracker(route)
+        val arrival = accepted(tracker, position(0, 0, 3, 0.0))
+
+        assertEquals(true, arrival.arrived)
+        assertEquals(ManeuverType.Arrive, arrival.upcomingManeuver?.maneuver?.type)
+    }
+
+    @Test
     fun rejectsRouteAndGeometryContractViolationsWithoutStateMutation() {
         val tracker = RouteProgressTracker(route)
         val initial = accepted(tracker, position(0, 0, 1, 0.5))
@@ -179,6 +188,7 @@ private fun twoLegRoute(): RoutePlan {
                 durationSeconds = 80L,
                 maneuvers = listOf(
                     RouteManeuver(2, ManeuverType.Continue, c, "Continue second leg"),
+                    RouteManeuver(3, ManeuverType.KeepRight, d, "Prepare to arrive"),
                     RouteManeuver(3, ManeuverType.Arrive, d, "Arrive"),
                 ),
             ),
