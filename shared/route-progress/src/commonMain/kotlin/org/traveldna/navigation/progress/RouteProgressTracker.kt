@@ -13,6 +13,9 @@ import org.traveldna.routing.contracts.RoutePlan
  * It receives positions already matched by an upstream component. Equal route
  * coordinates are allowed for a stationary vehicle; backwards coordinates are
  * explicit rejections and never mutate accepted state.
+ *
+ * Leg and maneuver lookup use binary search, avoiding a full route scan for
+ * every accepted sample.
  */
 class RouteProgressTracker(
     val route: RoutePlan,
@@ -78,23 +81,69 @@ class RouteProgressTracker(
     private fun buildSnapshot(position: MatchedRoutePosition): RouteProgressSnapshot {
         val coordinate = position.coordinate
         val arrived = coordinate.completedGeometryIndex == route.geometry.lastIndex
-        val activeLegIndex = if (arrived) {
-            route.legs.lastIndex
-        } else {
-            route.legs.indexOfFirst { coordinate.completedGeometryIndex < it.geometryEndIndex }
-                .also { check(it >= 0) { "route coordinate is not covered by any leg" } }
-        }
-        val upcomingManeuver = maneuverCursors.firstOrNull { cursor ->
-            val maneuverIndex = cursor.maneuver.geometryIndex
-            maneuverIndex > coordinate.completedGeometryIndex ||
-                (maneuverIndex == coordinate.completedGeometryIndex && coordinate.fractionToNext == 0.0)
-        }
+        val activeLegIndex = findActiveLegIndex(coordinate.completedGeometryIndex, arrived)
+        val upcomingManeuver = findUpcomingManeuver(
+            activeLegIndex = activeLegIndex,
+            completedGeometryIndex = coordinate.completedGeometryIndex,
+            fractionToNext = coordinate.fractionToNext,
+        )
         return RouteProgressSnapshot(
             position = position,
             activeLegIndex = activeLegIndex,
             upcomingManeuver = upcomingManeuver,
             arrived = arrived,
         )
+    }
+
+    private fun findActiveLegIndex(completedGeometryIndex: Int, arrived: Boolean): Int {
+        if (arrived) return route.legs.lastIndex
+
+        var low = 0
+        var high = route.legs.lastIndex
+        while (low < high) {
+            val middle = low + (high - low) / 2
+            if (completedGeometryIndex < route.legs[middle].geometryEndIndex) {
+                high = middle
+            } else {
+                low = middle + 1
+            }
+        }
+        check(completedGeometryIndex < route.legs[low].geometryEndIndex) {
+            "route coordinate is not covered by any active leg"
+        }
+        return low
+    }
+
+    private fun findUpcomingManeuver(
+        activeLegIndex: Int,
+        completedGeometryIndex: Int,
+        fractionToNext: Double,
+    ): RouteManeuverCursor? {
+        if (maneuverCursors.isEmpty()) return null
+        val firstEligibleGeometryIndex = if (fractionToNext == 0.0) {
+            completedGeometryIndex
+        } else {
+            completedGeometryIndex + 1
+        }
+
+        var low = 0
+        var high = maneuverCursors.size
+        while (low < high) {
+            val middle = low + (high - low) / 2
+            if (maneuverCursors[middle].maneuver.geometryIndex < firstEligibleGeometryIndex) {
+                low = middle + 1
+            } else {
+                high = middle
+            }
+        }
+        var candidateIndex = low
+        while (
+            candidateIndex < maneuverCursors.size &&
+            maneuverCursors[candidateIndex].legIndex < activeLegIndex
+        ) {
+            candidateIndex += 1
+        }
+        return maneuverCursors.getOrNull(candidateIndex)
     }
 
     private fun rejected(

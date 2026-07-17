@@ -102,9 +102,7 @@ private fun runBenchmark(sampleCount: Int, iterations: Int) {
         position(route.id, index.toLong(), index.toLong() * 100L, index, 0.0)
     }
 
-    repeat(BenchmarkWarmups) {
-        runBenchmarkIteration(route, positions)
-    }
+    repeat(BenchmarkWarmups) { runBenchmarkIteration(route, positions) }
     val elapsed = LongArray(iterations) {
         val started = System.nanoTime()
         runBenchmarkIteration(route, positions)
@@ -125,9 +123,7 @@ private fun runBenchmark(sampleCount: Int, iterations: Int) {
 
 private fun runBenchmarkIteration(route: RoutePlan, positions: List<MatchedRoutePosition>) {
     val tracker = RouteProgressTracker(route)
-    positions.forEach { position ->
-        check(tracker.accept(position) is RouteProgressDecision.Accepted)
-    }
+    positions.forEach { candidate -> check(tracker.accept(candidate) is RouteProgressDecision.Accepted) }
     check(tracker.lastSnapshot?.arrived == true)
 }
 
@@ -152,6 +148,7 @@ private fun referenceRoute(): RoutePlan {
                 listOf(
                     RouteManeuver(0, ManeuverType.Depart, points[0], "Depart"),
                     RouteManeuver(1, ManeuverType.TurnRight, points[1], "Turn right"),
+                    RouteManeuver(2, ManeuverType.KeepRight, points[2], "Finish first leg"),
                 ),
             ),
             RouteLeg(
@@ -162,7 +159,7 @@ private fun referenceRoute(): RoutePlan {
                 1_200L,
                 80L,
                 listOf(
-                    RouteManeuver(2, ManeuverType.Continue, points[2], "Continue"),
+                    RouteManeuver(2, ManeuverType.Continue, points[2], "Continue second leg"),
                     RouteManeuver(3, ManeuverType.Arrive, points[3], "Arrive"),
                 ),
             ),

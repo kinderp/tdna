@@ -35,12 +35,27 @@ class RouteProgressMapProjectorTest {
     }
 
     @Test
-    fun rejectsOverlayForAnotherRoute() {
+    fun rejectsAnotherRouteOrTruncatedOverlay() {
         assertFailsWith<IllegalArgumentException> {
             RouteProgressMapProjector.project(
                 sceneId = MapSceneId("scene.progress-v0"),
                 overlay = overlay(RouteId("overlay-route-v0")),
                 snapshot = snapshot(RouteId("snapshot-route-v0")),
+            )
+        }
+
+        val routeId = RouteId("truncated-progress-route-v0")
+        val truncated = RouteOverlay(
+            id = MapItemId("route.truncated"),
+            routeId = routeId,
+            geometry = listOf(GeoPoint(0.0, 0.0), GeoPoint(0.0, 0.01)),
+            role = RouteOverlayRole.Primary,
+        )
+        assertFailsWith<IllegalArgumentException> {
+            RouteProgressMapProjector.project(
+                sceneId = MapSceneId("scene.progress-v0"),
+                overlay = truncated,
+                snapshot = snapshot(routeId, geometryIndex = 2),
             )
         }
     }
@@ -52,12 +67,15 @@ class RouteProgressMapProjectorTest {
         role = RouteOverlayRole.Primary,
     )
 
-    private fun snapshot(routeId: RouteId): RouteProgressSnapshot = RouteProgressSnapshot(
+    private fun snapshot(
+        routeId: RouteId,
+        geometryIndex: Int = 1,
+    ): RouteProgressSnapshot = RouteProgressSnapshot(
         position = MatchedRoutePosition(
             routeId = routeId,
             sampleSequence = LocationSequence(1),
             monotonicTime = MonotonicInstant(1_000L),
-            coordinate = RouteCoordinate(1, 0.25),
+            coordinate = RouteCoordinate(geometryIndex, 0.25),
             lateralDistanceMeters = 1.0,
             confidence = MatchConfidence.High,
         ),

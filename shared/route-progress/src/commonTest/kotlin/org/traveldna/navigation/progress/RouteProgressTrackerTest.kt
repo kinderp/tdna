@@ -2,7 +2,6 @@ package org.traveldna.navigation.progress
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import org.traveldna.geo.contracts.GeoPoint
@@ -38,6 +37,7 @@ class RouteProgressTrackerTest {
 
         val boundary = accepted(tracker, position(2, 2_000, 2, 0.0))
         assertEquals(1, boundary.activeLegIndex)
+        assertEquals(1, boundary.upcomingManeuver?.legIndex)
         assertEquals(ManeuverType.Continue, boundary.upcomingManeuver?.maneuver?.type)
 
         val arrival = accepted(tracker, position(3, 3_000, 3, 0.0))
@@ -105,9 +105,11 @@ class RouteProgressTrackerTest {
         assertNull(tracker.lastSnapshot)
 
         accepted(tracker, position(10, 10_000, 2, 0.5))
-        assertFailsWith<IllegalArgumentException> {
-            require(tracker.accept(position(11, 11_000, 1, 0.0)) is RouteProgressDecision.Accepted)
-        }
+        assertRejected(
+            tracker,
+            position(11, 11_000, 1, 0.0),
+            RouteProgressRejectionReason.RegressedAlongRoute,
+        )
 
         tracker.reset()
         assertNull(tracker.lastSnapshot)
@@ -165,6 +167,7 @@ private fun twoLegRoute(): RoutePlan {
                 maneuvers = listOf(
                     RouteManeuver(0, ManeuverType.Depart, a, "Depart"),
                     RouteManeuver(1, ManeuverType.TurnRight, b, "Turn right"),
+                    RouteManeuver(2, ManeuverType.KeepRight, c, "Finish first leg"),
                 ),
             ),
             RouteLeg(
@@ -175,7 +178,7 @@ private fun twoLegRoute(): RoutePlan {
                 distanceMeters = 1_200L,
                 durationSeconds = 80L,
                 maneuvers = listOf(
-                    RouteManeuver(2, ManeuverType.Continue, c, "Continue"),
+                    RouteManeuver(2, ManeuverType.Continue, c, "Continue second leg"),
                     RouteManeuver(3, ManeuverType.Arrive, d, "Arrive"),
                 ),
             ),
