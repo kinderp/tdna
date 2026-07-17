@@ -38,6 +38,7 @@ codebase. I commenti nel codice restano in inglese e più sintetici.
 | [42 - Travel DNA Lab](42-traveldna-lab-roadmap.md) | Scenari didattici riproducibili. | Docenti e studenti. | Per laboratori. |
 | [43 - Routing Java/Rust](43-reference-routing-java-rust.md) | Grafo, Dijkstra, A*, fixture e confronto. | Studenti Java/Rust. | Primo Lab algoritmico. |
 | [44 - Contratti routing e fake provider](44-contratti-routing-e-fake-provider.md) | KMP, porte, modelli canonici, capability, invarianti e testkit. | Studenti Kotlin e architettura. | Dopo il capitolo 43. |
+| [45 - MapScene e fake renderer](45-map-scene-e-fake-renderer.md) | Scena statica, delta, semantica marker, rendering port e performance. | Studenti mappe e architettura. | Dopo il capitolo 44. |
 | [50 - Registro milestone](50-registro-milestone.md) | Evoluzione e dipendenze. | Maintainer. | Durante la pianificazione. |
 | [51 - Roadmap librerie](51-roadmap-librerie-open-source.md) | Possesso, sostituzione e upstream. | Architettura. | Prima di riscrivere. |
 | [52 - Matrice tecnologie](52-matrice-tecnologie-decisioni.md) | Alternative, pro, contro e stato. | Tutti. | Prima di riaprire una scelta. |
@@ -58,5 +59,5 @@ Ogni capitolo dovrebbe contenere, quando utile:
 ## Stato
 
 Vedere [documentation-status.md](documentation-status.md). Il repository contiene
-due Lab eseguibili; le altre mappe descrivono contratti e responsabilità target
-da promuovere progressivamente a codice.
+tre Lab eseguibili: routing Java/Rust, contratti routing con fake provider e
+MapScene con fake renderer.
