@@ -4,10 +4,8 @@
 
 `implementation-backed — Foundations and Travel DNA Lab v0`
 
-Questo capitolo introduce il confine fra un futuro componente di map matching e
-il runtime che segue l'avanzamento lungo una `RoutePlan` già nota.
-
-Il codice si trova in:
+Questo capitolo documenta il confine fra un futuro componente di map matching e
+il runtime che segue una `RoutePlan` già nota. Il codice si trova in:
 
 ```text
 shared/navigation-contracts/
@@ -17,9 +15,9 @@ labs/route-progress-cli/
 fixtures/navigation/
 ```
 
-La slice **non** decide su quale strada si trovi un punto GPS. Riceve una
-posizione che un componente precedente ha già associato alla geometria della
-route e verifica ordine, coerenza e progresso.
+La slice non decide su quale strada si trovi un campione GPS. Riceve una
+posizione già associata alla geometria della route e verifica identità, ordine,
+progresso, leg attiva, manovra e arrivo.
 
 ## Cosa imparerai
 
@@ -30,14 +28,14 @@ Al termine dovresti saper spiegare:
 3. come indice e frazione descrivono un punto lungo una polilinea;
 4. perché route ID, sequence, tempo e coordinata hanno invarianti separate;
 5. perché un veicolo fermo può produrre coordinate route uguali;
-6. perché una regressione non viene corretta silenziosamente;
+6. perché una regressione viene rifiutata invece di essere corretta in silenzio;
 7. come si sceglie la leg attiva a un confine condiviso;
-8. come si seleziona la prossima manovra senza scansioni lineari;
-9. che cosa significa `arrived` nella v0;
-10. perché indice geometrico e distanza stradale non sono sinonimi;
-11. come uno snapshot diventa un delta compatto per la mappa;
-12. quali stati possiede il tracker;
-13. che cosa misura il benchmark;
+8. come si sceglie la prossima manovra senza scansioni lineari;
+9. perché all'arrivo viene preferita una manovra `Arrive` esplicita;
+10. perché indice geometrico, distanza e tempo non sono sinonimi;
+11. come si verifica una volta il legame route-overlay;
+12. come lo snapshot diventa un delta mappa `O(1)` per campione;
+13. cosa misura il benchmark e cosa lascia fuori;
 14. come questa slice prepara off-route e rerouting senza implementarli.
 
 ## Prerequisiti
@@ -55,33 +53,30 @@ Al termine dovresti saper spiegare:
 È l'osservazione del sensore o del provider:
 
 ```text
-latitudine
-longitudine
-accuratezza
-velocità
-bearing
-tempo
+latitudine, longitudine, accuratezza, velocità, bearing, tempo
 ```
 
 Travel DNA la normalizza in `LocationSample`.
 
 ### Posizione filtrata
 
-Un futuro filtro ridurrà rumore, spike e valori non plausibili. La slice
-corrente non contiene ancora questo passaggio.
+Un futuro filtro ridurrà rumore, spike e valori non plausibili. Questa slice non
+contiene ancora il filtro.
 
 ### Posizione matched
 
-Un map matcher confronta la posizione con strade o route candidate e produce
-una ipotesi:
+Un futuro map matcher sceglierà una route o strada candidata e produrrà una
+ipotesi del tipo:
 
 ```text
-questa osservazione appartiene alla route R
-fra i punti geometrici 42 e 43
-al 35% del segmento
+route R
+segmento fra i punti 42 e 43
+frazione 0,35
+lateral distance 2,4 m
+confidence Medium
 ```
 
-Questa è `MatchedRoutePosition`.
+Il risultato canonico è `MatchedRoutePosition`.
 
 ### Route progress
 
@@ -99,7 +94,7 @@ quale manovra viene dopo?
 siamo arrivati?
 ```
 
-Non deve ripetere il map matching.
+Non ripete il map matching.
 
 ## `RouteCoordinate`
 
@@ -110,33 +105,26 @@ RouteCoordinate(
 )
 ```
 
-Significa:
-
-- il punto `42` è l'ultimo punto raggiunto della geometria;
-- la posizione è al 35% del segmento verso il punto `43`.
+Significa che il punto `42` è l'ultimo punto geometrico raggiunto e la posizione
+è al 35% del segmento verso il punto `43`.
 
 Invarianti:
 
 ```text
-index >= 0
-0 <= fraction < 1
+completedGeometryIndex >= 0
 fraction finita
+0 <= fraction < 1
 ```
 
-`1.0` è escluso perché duplichererebbe:
+`1.0` è escluso perché duplichererebbe la forma canonica:
 
 ```text
 index 42, fraction 1.0
 index 43, fraction 0.0
 ```
 
-Lo zero firmato viene normalizzato:
-
-```text
--0.0 == 0.0
-```
-
-La forma canonica rende deterministici confronto, hash, test e cache.
+Lo zero firmato viene normalizzato, quindi `-0.0` e `0.0` hanno uguaglianza e
+hash coerenti.
 
 ## `MatchedRoutePosition`
 
@@ -154,15 +142,12 @@ confidence
 ### Route ID
 
 Collega la posizione a una route canonica precisa. Un tracker legato alla route
-A rifiuta una posizione per la route B.
-
-Il contratto assume che route ID differenti identifichino versioni differenti
-della geometria. Riutilizzare lo stesso ID per una nuova route renderebbe
-ambigua la cache e non è consentito dal processo applicativo.
+A rifiuta una posizione per la route B. Il processo applicativo non deve riusare
+lo stesso ID per geometrie differenti.
 
 ### Sequence e tempo
 
-Derivano dallo stream di posizione. Devono crescere entrambi rispetto
+Derivano dallo stream di posizione e devono crescere entrambi rispetto
 all'ultima posizione accepted.
 
 ### Distanza laterale
@@ -171,64 +156,37 @@ all'ultima posizione accepted.
 0 <= lateralDistanceMeters <= 100000
 ```
 
-È metadato del matcher, non una decisione off-route. Il tracker v0 non stabilisce
-una soglia di deviazione.
+È un metadato del matcher, non una decisione off-route. La v0 non introduce una
+soglia di deviazione.
 
 ### Confidenza
 
 ```text
-Low
-Medium
-High
+Low, Medium, High
 ```
 
-È una classificazione iniziale e non una probabilità universale. Provider
-diversi possono calcolare score incompatibili; l'adapter o una policy di
-matching li tradurrà nel vocabolario Travel DNA.
-
-Il tracker non rifiuta automaticamente `Low`: una futura policy può decidere se
-sospendere guidance, degradare suggerimenti o attendere altri campioni.
+È una classificazione Travel DNA, non una probabilità universale. Il tracker non
+rifiuta automaticamente `Low`; una futura policy potrà sospendere o degradare la
+guidance.
 
 ## Tre monotonicità separate
 
-### Sequence
-
 ```text
 new.sequence > previous.sequence
-```
-
-Protegge da duplicati e consegne stantie.
-
-### Tempo monotono
-
-```text
 new.time > previous.time
-```
-
-Protegge l'ordine temporale indipendentemente dalla sequence.
-
-### Coordinata route
-
-```text
 new.coordinate >= previous.coordinate
 ```
 
-Qui l'uguaglianza è valida. Un veicolo fermo può ricevere campioni nuovi con
-stessa posizione matched.
+L'uguaglianza della coordinata è valida: un veicolo fermo può ricevere campioni
+nuovi senza avanzare sulla geometria. Una coordinata inferiore viene rifiutata
+come `RegressedAlongRoute`.
 
-Una coordinata minore viene rifiutata come:
+La v0 non applica tolleranze nascoste. Rumore e isteresi appartengono al matcher
+o a una futura policy esplicita e testabile.
 
-```text
-RegressedAlongRoute
-```
+## Precedenza dei rifiuti
 
-La v0 non introduce una tolleranza di regressione. Rumore e isteresi
-appartengono al matcher o a una futura policy esplicita, non a una correzione
-nascosta nel tracker.
-
-## Ordine dei controlli
-
-Il tracker usa una precedenza deterministica:
+Il tracker usa un ordine stabile:
 
 ```text
 1. RouteMismatch
@@ -239,51 +197,36 @@ Il tracker usa una precedenza deterministica:
 6. RegressedAlongRoute
 ```
 
-Un input può violare più regole; la precedenza rende stabile il motivo
-osservabile e semplifica test e diagnostica.
+Un input può violare più regole. La precedenza rende deterministici test,
+diagnostica e report.
 
 ## `inspect`, `accept` e `reset`
 
 ```kotlin
-val decision = tracker.inspect(position)
+val decision = tracker.inspect(position) // non muta
+val decision = tracker.accept(position)  // commit solo se Accepted
+tracker.reset()                          // nuova sessione sulla stessa route
 ```
 
-`inspect` non modifica lo stato.
-
-```kotlin
-val decision = tracker.accept(position)
-```
-
-`accept` salva lo snapshot soltanto quando la decisione è `Accepted`.
-
-```kotlin
-tracker.reset()
-```
-
-`reset` cancella il progresso della stessa route e permette una nuova sessione.
 Una route sostitutiva usa un nuovo `RouteProgressTracker` legato al nuovo
 `RoutePlan`.
 
-## Stato bounded
+## Stato posseduto
 
-Il tracker possiede:
+Il tracker conserva:
 
 ```text
 RoutePlan immutabile
-lista precomputata dei cursori manovra
+cursori manovra precomputati
+manovra Arrive finale pre-selezionata
 ultimo RouteProgressSnapshot accepted
 ```
 
-Non conserva:
+Non conserva campioni storici, decisioni storiche, file, rete, database, stato
+del renderer o geometrie ricostruite per campione. Lo stato è bounded dalla
+route installata e non cresce con la durata del viaggio.
 
-- tutti i campioni;
-- tutte le decisioni;
-- log crescenti;
-- geometrie duplicate;
-- stato del renderer;
-- file o rete.
-
-## La leg attiva
+## Leg attiva
 
 Le leg sono contigue e condividono il punto di confine:
 
@@ -301,19 +244,13 @@ oltre il punto 2  -> leg 1
 punto finale      -> ultima leg
 ```
 
-Il confine appartiene quindi alla leg che inizia in quel punto. Questa scelta è
-utile per mostrare le istruzioni della nuova tappa appena il confine viene
-raggiunto.
-
-La ricerca usa binary search sugli `geometryEndIndex` delle leg:
+La ricerca usa binary search sugli `geometryEndIndex`:
 
 ```text
 O(log numero-leg)
 ```
 
-Non scansiona tutte le leg a ogni campione.
-
-## La prossima manovra
+## Prossima manovra
 
 Ogni `RouteManeuverCursor` conserva:
 
@@ -325,20 +262,20 @@ RouteManeuver
 
 Policy:
 
-- se `fraction == 0`, una manovra sul punto corrente è ancora eleggibile;
-- se `fraction > 0`, le manovre sul punto corrente sono già superate;
-- a un confine condiviso, le manovre della leg precedente vengono saltate;
-- la prima manovra della leg attiva o successiva viene scelta;
+- con `fraction == 0`, una manovra sul punto corrente è ancora eleggibile;
+- con `fraction > 0`, le manovre sul punto corrente sono considerate superate;
+- al confine vengono saltate le manovre della leg precedente;
+- viene scelta la prima manovra della leg attiva o di una leg futura;
 - in assenza di manovre il valore è `null`.
 
-Anche questa ricerca usa binary search per geometry index e un piccolo skip dei
-soli duplicati di confine:
+La ricerca usa binary search per indice geometrico e un piccolo skip dei soli
+duplicati di confine:
 
 ```text
 O(log numero-manovre)
 ```
 
-## Arrivo
+## Arrivo e tie-break `Arrive`
 
 La v0 considera arrivata una posizione quando:
 
@@ -347,10 +284,13 @@ completedGeometryIndex == route.geometry.lastIndex
 fractionToNext == 0
 ```
 
-`arrived` non dimostra che il veicolo sia fisicamente parcheggiato o che l'utente
-abbia concluso il viaggio. È lo stato di avanzamento sulla geometria della route.
+Una route può contenere più manovre sul punto finale. Il tracker pre-seleziona,
+una volta durante la costruzione, la prima manovra `Arrive` della leg finale. A
+`arrived = true` espone soltanto quella manovra oppure `null`; non presenta come
+"prossima" una svolta non-arrival già collocata sul punto finale.
 
-La prossima manovra può ancora essere `Arrive`, utile per HUD e voce.
+`arrived` non dimostra che il veicolo sia parcheggiato o che il viaggio sia stato
+chiuso. Descrive soltanto la fine della geometria route.
 
 ## `RouteProgressSnapshot`
 
@@ -359,46 +299,56 @@ Contiene:
 ```text
 MatchedRoutePosition accepted
 activeLegIndex
-upcomingManeuver cursor o null
+upcomingManeuver oppure null
 arrived
 ```
 
-Non contiene ancora:
+Il contratto rifiuta un cursore appartenente a una leg già completata. Uno
+snapshot arrived può esporre soltanto una manovra `Arrive` oppure nessuna
+manovra.
 
-- distanza percorsa;
-- distanza rimanente;
-- distanza alla manovra;
-- ETA;
-- velocità filtrata;
-- stato off-route.
+Non contiene ancora distanza percorsa/rimanente, distanza alla manovra, ETA,
+velocità filtrata o stato off-route.
 
 ## Perché non calcolare distanza dall'indice
 
-I punti della geometria non sono equidistanti:
-
-```text
-segmento A = 2 metri
-segmento B = 800 metri
-```
-
-Dire “50 punti su 100” non significa “50% della distanza”. Inoltre la distanza
-stradale del provider può includere curvature o costing non ricostruibili dal
-solo numero di punti.
-
-Finché il contratto non contiene lunghezze cumulative o un provider affidabile,
+I punti della geometria non sono equidistanti. Cinquanta punti su cento non
+significano il 50% della distanza e non permettono di ricostruire il costing del
+provider. Fino a quando il contratto non possiede lunghezze cumulative affidabili,
 Travel DNA non fabbrica distanze o ETA.
 
-## Proiezione verso `MapSceneDelta`
+## Binding route-overlay verificato una volta
+
+Confrontare l'intera geometria a ogni campione violerebbe il percorso caldo.
+Controllare soltanto il `RouteId`, però, permetterebbe a un overlay stale con lo
+stesso ID e geometria diversa di ricevere indici errati.
+
+La soluzione è separare installazione e aggiornamento:
 
 ```kotlin
-RouteProgressMapProjector.project(
-    sceneId,
-    routeOverlay,
-    progressSnapshot,
+val binding = RouteProgressMapProjector.bind(
+    sceneId = scene.id,
+    overlay = routeOverlay,
+    route = routePlan,
 )
 ```
 
-Produce:
+`bind` viene chiamato quando la route viene installata e verifica:
+
+- route ID uguale;
+- geometria overlay uguale alla geometria canonica;
+- numero di punti da conservare nel binding.
+
+Il binding non è costruibile liberamente fuori dal modulo projector.
+
+Nel loop:
+
+```kotlin
+val delta = RouteProgressMapProjector.project(binding, snapshot)
+```
+
+La proiezione verifica soltanto route ID, indice, punto finale e frazione e
+produce:
 
 ```text
 MapSceneDelta.UpdateRouteProgress
@@ -408,13 +358,7 @@ MapSceneDelta.UpdateRouteProgress
   fractionToNext
 ```
 
-Il projector verifica:
-
-- route ID dello snapshot uguale alla route dell'overlay;
-- indice contenuto nella geometria installata;
-- frazione zero sul punto finale.
-
-Non copia la geometria e non crea GeoJSON.
+Il costo per update è `O(1)` e non copia geometria né costruisce GeoJSON.
 
 ## Percorso caldo target
 
@@ -425,24 +369,17 @@ LocationSample
 -> MatchedRoutePosition
 -> RouteProgressTracker.accept
 -> RouteProgressSnapshot
--> RouteProgressMapProjector
+-> RouteProgressMapProjector.project(binding, snapshot)
 -> MapSceneDelta.UpdateRouteProgress
 -> renderer adapter
 ```
 
-Il tracker non contiene:
-
-- plugin lookup;
-- parser;
-- database;
-- rete;
-- logging verboso;
-- serializzazione;
-- UI.
+Nel loop non entrano plugin lookup, file, parser, rete, database, logging verboso,
+serializzazione o ricostruzione della route.
 
 ## Fixture didattica
 
-Il Lab usa una route sintetica code-defined con:
+Il Lab usa una route sintetica definita in Kotlin:
 
 ```text
 4 punti geometrici
@@ -459,9 +396,8 @@ Metadati:
 - [`reference-route-progress-v0.meta.yaml`](../../fixtures/navigation/reference-route-progress-v0.meta.yaml)
 - [policy fixture navigation](../../fixtures/navigation/README.md)
 
-La fixture resta in Kotlin perché questa slice studia la semantica del tracker,
-non un nuovo formato di serializzazione. Un file parser verrà introdotto quando
-esisterà un vero requisito di import/replay matched.
+Non viene introdotto un nuovo parser finché non esiste un requisito reale di
+import/replay di posizioni matched.
 
 ## Output del Lab
 
@@ -469,13 +405,11 @@ esisterà un vero requisito di import/replay matched.
 sh tools/tdna lab route-progress
 ```
 
-Forma:
-
 ```json
 {"scenario":"reference-route-progress-v0","accepted":5,"rejected":1,"rejection":"RegressedAlongRoute","boundary_leg":1,"boundary_maneuver":"Continue","completed_index":3,"fraction":0.0,"active_leg":1,"upcoming_maneuver":"Arrive","arrived":true,"delta_index":3}
 ```
 
-Il Lab verifica internamente il ground truth prima di stampare.
+Il Lab verifica il ground truth prima di stampare.
 
 ## Mappa del codice
 
@@ -488,20 +422,22 @@ Main.runLab
    -> findActiveLegIndex
    -> findUpcomingManeuver
    -> RouteProgressSnapshot
--> RouteProgressMapProjector.project
--> canonical JSON report
+-> RouteProgressMapProjector.bind       // installazione
+-> RouteProgressMapProjector.project    // update compatto
+-> report JSON
 ```
 
 Ownership:
 
 | Componente | Stato | Frequenza |
 | --- | --- | --- |
-| `RoutePlan` | geometria/leg/manovre immutabili | installazione route |
-| `MatchedRoutePosition` | un output matcher | per campione |
-| `RouteProgressTracker` | ultimo snapshot | per sessione |
-| `RouteProgressSnapshot` | read model compatto | per accepted |
-| projector | nessuno | per aggiornamento mappa |
-| renderer | geometria installata e progress | superficie mappa |
+| `RoutePlan` | geometria, leg e manovre | installazione route |
+| `RouteProgressTracker` | cursori e ultimo snapshot | sessione |
+| `RouteProgressMapBinding` | identità scena/overlay/route e point count | installazione |
+| `MatchedRoutePosition` | output matcher | per campione |
+| `RouteProgressSnapshot` | read model | per accepted |
+| projector update | nessuno | per accepted |
+| renderer | geometria e progress | scena |
 
 ## Tracepoint logici
 
@@ -512,6 +448,7 @@ ROUTE_PROGRESS_ACCEPTED
 ROUTE_ACTIVE_LEG_CHANGED
 ROUTE_UPCOMING_MANEUVER_CHANGED
 ROUTE_ARRIVAL_REACHED
+MAP_ROUTE_PROGRESS_BOUND
 MAP_PROGRESS_DELTA_PROJECTED
 ```
 
@@ -523,20 +460,16 @@ La slice verifica:
 
 - indice/frazione e zero firmato;
 - lateral distance bounded;
-- route mismatch;
-- indice fuori geometria;
-- frazione invalida sul finale;
-- sequence e tempo non crescenti;
-- regressione di indice e frazione;
-- input rifiutato senza mutazione;
-- posizione stazionaria accepted;
-- boundary policy fra due leg;
-- priorità della manovra della nuova leg;
-- arrivo;
-- `inspect` non mutante;
-- `reset`;
-- overlay route mismatch e geometria troncata;
-- JVM/Linux x64;
+- route mismatch, indice fuori geometria e frazione invalida sul finale;
+- sequence/tempo non crescenti e regressione di indice/frazione;
+- rifiuto senza mutazione e posizione stationary accepted;
+- boundary policy e priorità della nuova leg;
+- tie-break `Arrive` al punto finale;
+- snapshot con cursore di leg completata rifiutato;
+- `inspect`, `accept` e `reset`;
+- binding che rifiuta route ID o geometria differente anche a pari lunghezza;
+- projector update per la route bound;
+- test common, JVM e Linux x64;
 - architecture boundaries.
 
 ## Benchmark diagnostico
@@ -552,32 +485,35 @@ Scenario:
 - fino a 100 leg;
 - una manovra per leg più `Arrive`;
 - tre warm-up;
-- sette run;
-- min, mediana e max;
+- sette run dispari;
+- minimo, mediana e massimo;
 - nessuna soglia CI.
 
-La costruzione di route e input avviene fuori dalla sezione misurata. Il dato
-misura tracker, ricerche binarie, snapshot e state commit.
+Route, input, costruzione del tracker e preprocessing dei cursori avvengono fuori
+dalla finestra misurata. Prima di ogni run il tracker viene resettato fuori dal
+timer. Il dato misura `accept`, le ricerche binarie, la costruzione dello snapshot
+e il commit dello stato.
 
-Non misura:
+Non misura GPS, filtro, map matching, binding/projector, renderer, rete, database,
+batteria, dispositivo mobile o affidabilità su strada.
 
-- GPS;
-- filtro;
-- map matching;
-- projector/renderer;
-- rete o database;
-- batteria;
-- dispositivo mobile;
-- affidabilità su strada.
-
-Il risultato osservato viene registrato nel report giornaliero indicizzato.
+Il risultato osservato viene registrato nel report giornaliero e nell'artifact
+CI; non è un SLA.
 
 ## Alternative considerate
 
 ### Usare direttamente `RouteOverlayProgress`
 
 Scartato: farebbe dipendere il runtime navigation dal contratto di rendering.
-`RouteCoordinate` appartiene al dominio navigation e viene proiettato dopo.
+
+### Confrontare la geometria a ogni update
+
+Scartato: è `O(numero punti)` per campione. Il binding fa il controllo una volta.
+
+### Fidarsi soltanto del route ID
+
+Scartato nel bordo map: un overlay stale o costruito male potrebbe avere lo stesso
+ID. Il binding confronta anche la geometria durante l'installazione.
 
 ### Rifiutare coordinate uguali
 
@@ -585,23 +521,20 @@ Scartato: un veicolo fermo produce campioni nuovi senza avanzamento geometrico.
 
 ### Correggere automaticamente le regressioni
 
-Scartato: nasconde il comportamento del matcher. Una futura policy di isteresi
-deve essere esplicita e testabile.
+Scartato: nasconde il comportamento del matcher. L'isteresi sarà una policy
+separata.
 
 ### Scansione lineare di leg e manovre
 
-Scartata per il percorso caldo: il costo crescerebbe con la route. La v0 usa
-binary search.
+Scartata per il percorso caldo: la v0 usa binary search.
 
 ### Calcolare ETA dalla frazione geometrica
 
-Scartato: non esiste una relazione affidabile fra numero di punti e distanza o
-tempo.
+Scartato: indice e frazione non rappresentano distanza o tempo affidabili.
 
 ### Integrare subito map matching
 
-Scartato: confonderebbe ricerca candidata, scoring e progress tracking in una
-sola slice difficile da insegnare e sostituire.
+Scartato: confonderebbe ricerca candidata, scoring e progress tracking.
 
 ## Errori comuni
 
@@ -610,39 +543,38 @@ sola slice difficile da insegnare e sostituire.
 - trattare lateral distance come off-route già deciso;
 - rifiutare un veicolo fermo;
 - accettare una regressione senza policy;
-- attribuire il confine alla leg precedente senza documentarlo;
-- scegliere una manovra della leg precedente al confine;
+- scegliere la leg precedente al confine;
+- esporre una manovra non-Arrive dopo l'arrivo;
+- confrontare tutta la geometria nel loop;
+- fidarsi di un overlay same-ID ma non verificato;
 - ricostruire la geometria a ogni update;
 - calcolare distanza da indice/frazione;
-- usare lo stesso route ID per geometrie diverse;
 - trasformare il benchmark CI in SLA.
 
 ## Esercizi
 
-1. Aggiungere una posizione stationary con confidence `Low` e spiegare perché il
-   tracker la accetta.
-2. Creare una policy separata che sospende la guidance con confidence `Low`.
+1. Aggiungere una posizione stationary con confidence `Low`.
+2. Progettare una policy separata che sospende guidance con confidence `Low`.
 3. Aggiungere tre manovre sullo stesso geometry index e definire il tie-break.
 4. Progettare cumulative segment distances senza dipendere dal renderer.
-5. Aggiungere un test con 100 leg per verificare i confini.
+5. Aggiungere un test con 100 leg e confini condivisi.
 6. Disegnare il contratto di un vero map matcher.
-7. Progettare una isteresi per piccole regressioni senza mutare il tracker base.
+7. Progettare una isteresi per piccole regressioni.
 8. Collegare uno snapshot accepted a un fake renderer.
 9. Misurare benchmark con 1, 10 e 100 leg.
-10. Progettare la route replacement senza riusare route ID.
+10. Progettare route replacement senza riusare route ID.
 
 ## Non-obiettivi
 
 - map matching reale;
 - filtro GPS;
 - distanza o ETA;
-- off-route;
-- rerouting;
+- off-route e rerouting;
 - voce;
 - adapter Android/iOS;
 - MapLibre;
 - dati stradali reali;
-- prestazioni di produzione.
+- benchmark di produzione.
 
 ## Documenti successivi
 

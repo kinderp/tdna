@@ -21,7 +21,7 @@ attiva, manovra, arrival e delta mappa senza implementare il map matching.
 
 Uno studente invia sei posizioni sintetiche lungo una route a due leg. Cinque
 sono accettate; una torna indietro ed è rifiutata. Al confine viene scelta la
-seconda leg, all'arrivo viene emesso un delta compatto per l'overlay.
+seconda leg; all'arrivo un binding già verificato produce un delta compatto.
 
 ## Platforms
 
@@ -42,17 +42,7 @@ La fixture è sintetica e non contiene un viaggio reale.
 
 ```bash
 sh tools/tdna lab route-progress
-```
-
-Verifica completa:
-
-```bash
 sh tools/tdna check
-```
-
-Benchmark:
-
-```bash
 sh tools/tdna bench route-progress 10000 7
 ```
 
@@ -72,11 +62,12 @@ seq 5, t=5000, index 3, fraction 0.0  -> accept; Arrive
 - 5 accepted;
 - 1 rejected `RegressedAlongRoute`;
 - rifiuto senza mutare l'ultimo snapshot;
-- al confine index 2 la leg attiva è 1;
-- la manovra della leg 1 prevale sulla manovra finale della leg 0;
+- leg attiva 1 al confine index 2;
+- `Continue` della nuova leg prevale sulla manovra della leg precedente;
 - coordinata finale `(3, 0.0)`;
-- `Arrive` come manovra;
+- `Arrive` preferita a eventuali altre manovre sul punto finale;
 - `arrived = true`;
+- binding route-overlay verificato una volta;
 - delta mappa con index 3 e fraction 0.
 
 ## Logical tracepoints
@@ -88,6 +79,7 @@ ROUTE_PROGRESS_ACCEPTED
 ROUTE_ACTIVE_LEG_CHANGED
 ROUTE_UPCOMING_MANEUVER_CHANGED
 ROUTE_ARRIVAL_REACHED
+MAP_ROUTE_PROGRESS_BOUND
 MAP_PROGRESS_DELTA_PROJECTED
 ```
 
@@ -101,6 +93,7 @@ Main.runLab
    -> findActiveLegIndex
    -> findUpcomingManeuver
    -> RouteProgressSnapshot
+-> RouteProgressMapProjector.bind
 -> RouteProgressMapProjector.project
 -> JSON report
 ```
@@ -110,8 +103,9 @@ Main.runLab
 | Stato | Owner | Durata |
 | --- | --- | --- |
 | route geometry/legs | `RoutePlan` | vita tracker |
-| maneuver cursors | tracker | vita tracker |
+| maneuver cursors/arrival cursor | tracker | vita tracker |
 | last accepted snapshot | tracker | sessione |
+| route-overlay binding | projector/caller | installazione scena |
 | candidate position | caller | una decisione |
 | map delta | projector/caller | una emissione |
 | rendered geometry | renderer | scena installata |
@@ -124,13 +118,15 @@ Main.runLab
 
 ## Performance properties
 
-- stato bounded;
+- stato bounded dalla route;
 - nessun I/O o rete nel tracker;
 - nessuna copia della route per sample;
 - leg lookup `O(log L)`;
 - maneuver lookup `O(log M)` più soli duplicati di confine;
-- delta mappa compatto;
-- benchmark diagnostico senza threshold.
+- full geometry check soltanto nel binding;
+- projector update `O(1)`;
+- benchmark con preprocessing fuori dal timer;
+- nessuna soglia CI.
 
 ## Privacy and safety
 
@@ -157,14 +153,14 @@ Main.runLab
 - route con migliaia di manovre duplicate;
 - concorrenza;
 - route replacement coordinator;
-- matched-position parser;
+- parser di posizioni matched;
 - map matcher reale;
 - distanza cumulativa.
 
 ## Future tests
 
 - raw `LocationSample` -> matched position;
-- matched position -> route progress -> fake renderer;
+- matched position -> progress -> fake renderer;
 - confidence policy;
 - off-route state machine;
 - missed exit/reroute;
@@ -178,9 +174,11 @@ Main.runLab
 - correggere regressioni;
 - usare scan lineari nel hot path;
 - scegliere la leg precedente al confine;
+- esporre una manovra non-arrival dopo l'arrivo;
+- verificare tutta la geometria a ogni sample;
+- usare un overlay same-ID non bound;
 - ricostruire geometria nel projector;
-- inventare distanza o ETA;
-- usare route ID uguale per una route sostituita.
+- inventare distanza o ETA.
 
 ## Non-goals
 
@@ -196,13 +194,13 @@ Main.runLab
 ## Questions for students
 
 1. Quale componente produce `MatchedRoutePosition`?
-2. Perché route coordinate uguali sono valide?
+2. Perché coordinate route uguali sono valide?
 3. Quali tre monotonicità vengono controllate?
 4. Perché il confine appartiene alla nuova leg?
-5. Perché il tracker non calcola distanza?
+5. Perché il binding confronta la geometria una sola volta?
 6. Quale stato cambia dopo un rifiuto?
 7. Che cosa contiene il delta mappa?
-8. Quale problema risolve route ID?
+8. Perché `arrived` non implica viaggio concluso?
 
 ## Related docs
 
