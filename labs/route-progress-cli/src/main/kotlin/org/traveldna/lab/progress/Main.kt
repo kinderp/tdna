@@ -131,9 +131,12 @@ private fun runBenchmark(sampleCount: Int, iterations: Int) {
         System.nanoTime() - started
     }.sorted()
     val median = elapsed[elapsed.size / 2]
+    val maneuverCount = route.legs.sumOf { it.maneuvers.size }
     println(
         "{\"benchmark\":\"route-progress-v0\"," +
             "\"samples\":$sampleCount," +
+            "\"legs\":${route.legs.size}," +
+            "\"maneuvers\":$maneuverCount," +
             "\"warmups\":$BenchmarkWarmups," +
             "\"iterations\":$iterations," +
             "\"min_elapsed_ns\":${elapsed.first()}," +
@@ -194,15 +197,43 @@ private fun referenceRoute(): RoutePlan {
 
 private fun benchmarkRoute(sampleCount: Int): RoutePlan {
     val points = List(sampleCount) { index -> GeoPoint(0.0, index * 0.000001) }
-    val distance = sampleCount.toLong()
+    val segmentCount = points.lastIndex
+    val legCount = minOf(MaxBenchmarkLegs, segmentCount)
+    val legs = List(legCount) { legIndex ->
+        val start = legIndex * segmentCount / legCount
+        val end = (legIndex + 1) * segmentCount / legCount
+        check(end > start)
+        val maneuvers = buildList {
+            add(
+                RouteManeuver(
+                    geometryIndex = start,
+                    type = if (legIndex == 0) ManeuverType.Depart else ManeuverType.Continue,
+                    position = points[start],
+                    instruction = if (legIndex == 0) "Depart" else "Continue leg $legIndex",
+                ),
+            )
+            if (legIndex == legCount - 1) {
+                add(RouteManeuver(end, ManeuverType.Arrive, points[end], "Arrive"))
+            }
+        }
+        val distance = (end - start).toLong()
+        RouteLeg(
+            geometryStartIndex = start,
+            geometryEndIndex = end,
+            origin = points[start],
+            destination = points[end],
+            distanceMeters = distance,
+            durationSeconds = distance,
+            maneuvers = maneuvers,
+        )
+    }
+    val total = segmentCount.toLong()
     return RoutePlan(
         id = RouteId("benchmark-progress-route-v0"),
         geometry = points,
-        legs = listOf(
-            RouteLeg(0, points.lastIndex, points.first(), points.last(), distance, distance, emptyList()),
-        ),
-        distanceMeters = distance,
-        durationSeconds = distance,
+        legs = legs,
+        distanceMeters = total,
+        durationSeconds = total,
         provenance = RouteProvenance(PluginId("org.traveldna.progress-benchmark")),
     )
 }
@@ -228,3 +259,4 @@ private const val BenchmarkWarmups: Int = 3
 private const val DefaultBenchmarkIterations: Int = 7
 private const val MaxBenchmarkIterations: Int = 25
 private const val MaxBenchmarkSamples: Int = 100_000
+private const val MaxBenchmarkLegs: Int = 100
