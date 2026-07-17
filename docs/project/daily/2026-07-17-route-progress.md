@@ -83,6 +83,9 @@ Il map matching reale resta fuori scope.
    distanze o ETA.
 10. **Snapshot pubblico troppo permissivo** — rifiuta cursori di leg completate e
     manovre non-Arrive quando `arrived`.
+11. **Assertion di test dentro il timer** — rimossa la verifica per campione;
+    snapshot finale, sequence e coordinata sono controllati dopo il timestamp di
+    fine di ogni run.
 
 Ogni finding e commit sostanziale ha azzerato il clean-review counter.
 
@@ -98,7 +101,7 @@ Ogni finding e commit sostanziale ha azzerato il clean-review counter.
 - `inspect` e `reset`;
 - binding route-overlay e geometria alterata;
 - projector update;
-- benchmark arguments;
+- benchmark arguments e verifica finale fuori dal timer;
 - common/JVM/Linux x64;
 - architecture boundaries e Foundation CI.
 
@@ -114,46 +117,31 @@ sh tools/tdna lab route-progress
 
 ## Benchmark diagnostico osservato
 
-Evidenza:
+Evidenza tecnica precedente al finding 11:
 
 - Foundation CI run
   [#110](https://github.com/kinderp/tdna/actions/runs/29591739761);
 - technical head `db98ac639c02c861a73e2373b100e3d6d3cb01c2`;
 - artifact `8411476950`;
-- digest `sha256:db8a071fea4f9b76903d57e8db1e7e4692de54ee691143546b6cb3d7097148b8`;
-- artifact disponibile fino al 31 luglio 2026.
+- digest `sha256:db8a071fea4f9b76903d57e8db1e7e4692de54ee691143546b6cb3d7097148b8`.
 
 ```json
 {"benchmark":"route-progress-v0","samples":10000,"legs":100,"maneuvers":101,"warmups":3,"iterations":7,"min_elapsed_ns":1031616,"median_elapsed_ns":9649963,"max_elapsed_ns":13341044,"median_ns_per_sample":965.00}
 ```
 
-Ambiente:
+Quel dato includeva una assertion leggera per campione e resta solo una evidenza
+storica. La CI finale riesegue il benchmark con:
 
 ```text
-GitHub-hosted Ubuntu 24.04
-Java 21
-Gradle 9.5.1
-Kotlin 2.4.0
-10.000 accepted positions
-100 leg
-101 manovre
-3 warm-up
-7 run dispari
+route, input, tracker e cursori fuori dal timer
+reset fuori dal timer
+nessuna assertion per campione nella finestra
+verifica finale di arrival, sequence e coordinata dopo il timer
 ```
 
-Interpretazione limitata:
-
-- mediana osservata circa `9,65 ms` per 10.000 update;
-- `965 ns/update` nella specifica esecuzione CI;
-- la variabilità min/mediana/max impedisce conclusioni di produzione;
-- nessuna soglia, SLA o confronto linguistico viene dichiarato.
-
-Route, input, tracker e preprocessing sono fuori dal timer. La finestra misura
-`accept`, binary search, snapshot e state commit. Non misura GPS, filter, map
-matching, projector/renderer, rete, database, mobile, batteria o strada.
-
-La CI finale sul substantive head rieseguirà Lab e benchmark; il suo risultato
-resta nell'artifact e nel ledger PR senza richiedere modifiche al report.
+La misurazione osserva `accept`, binary search, snapshot e commit. Non misura GPS,
+filter, map matching, projector/renderer, rete, database, mobile, batteria o
+strada. Nessun risultato è un SLA o una soglia CI.
 
 ## Documentazione
 

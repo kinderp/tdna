@@ -129,12 +129,15 @@ private fun runBenchmark(sampleCount: Int, iterations: Int) {
     repeat(BenchmarkWarmups) {
         tracker.reset()
         runBenchmarkIteration(tracker, positions)
+        verifyBenchmarkOutcome(tracker, sampleCount)
     }
     val elapsed = LongArray(iterations) {
         tracker.reset()
         val started = System.nanoTime()
         runBenchmarkIteration(tracker, positions)
-        System.nanoTime() - started
+        val duration = System.nanoTime() - started
+        verifyBenchmarkOutcome(tracker, sampleCount)
+        duration
     }.sorted()
     val median = elapsed[elapsed.size / 2]
     val maneuverCount = route.legs.sumOf { it.maneuvers.size }
@@ -156,8 +159,14 @@ private fun runBenchmarkIteration(
     tracker: RouteProgressTracker,
     positions: List<MatchedRoutePosition>,
 ) {
-    positions.forEach { candidate -> check(tracker.accept(candidate) is RouteProgressDecision.Accepted) }
-    check(tracker.lastSnapshot?.arrived == true)
+    positions.forEach(tracker::accept)
+}
+
+private fun verifyBenchmarkOutcome(tracker: RouteProgressTracker, sampleCount: Int) {
+    val finalSnapshot = checkNotNull(tracker.lastSnapshot)
+    check(finalSnapshot.arrived)
+    check(finalSnapshot.position.sampleSequence == LocationSequence((sampleCount - 1).toLong()))
+    check(finalSnapshot.position.coordinate == RouteCoordinate(sampleCount - 1, 0.0))
 }
 
 private fun referenceRoute(): RoutePlan {
