@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check source-level module import boundaries for the shared Kotlin seed."""
+"""Check source-level module import boundaries for shared Kotlin modules."""
 from __future__ import annotations
 
 import re
@@ -20,6 +20,29 @@ RULES = {
         "org.traveldna.plugin.sdk.",
         "org.traveldna.routing.contracts.",
         "org.traveldna.routing.testkit.",
+    ),
+    "shared/map-contracts": (
+        "kotlin.",
+        "org.traveldna.plugin.sdk.",
+        "org.traveldna.routing.contracts.",
+    ),
+    "shared/map-testkit": (
+        "kotlin.",
+        "org.traveldna.plugin.sdk.",
+        "org.traveldna.routing.contracts.",
+        "org.traveldna.map.contracts.",
+    ),
+    "shared/fake-map-renderer": (
+        "kotlin.",
+        "org.traveldna.plugin.sdk.",
+        "org.traveldna.routing.contracts.",
+        "org.traveldna.map.contracts.",
+        "org.traveldna.map.testkit.",
+    ),
+    "shared/route-map-projector": (
+        "kotlin.",
+        "org.traveldna.routing.contracts.",
+        "org.traveldna.map.contracts.",
     ),
 }
 FORBIDDEN_TEXT = (
