@@ -18,7 +18,14 @@ class MapRendererContractReport(
     val checks: List<String> = checks.toList()
 }
 
-/** Reusable behavior probe for deterministic renderer test implementations. */
+/**
+ * Reusable full-capability behavior probe for deterministic renderer test
+ * implementations.
+ *
+ * A provider must declare every capability exercised here. Providers with a
+ * smaller capability set should use narrower probes rather than pass a test
+ * that invokes unsupported operations.
+ */
 object MapRendererContractProbe {
     suspend fun verify(
         renderer: MapRendererPort,
@@ -26,14 +33,17 @@ object MapRendererContractProbe {
         routeOverlayId: MapItemId,
         markerToUpsert: MapMarker,
     ): MapRendererContractReport {
-        val checks = mutableListOf<String>()
-        require(MapRendererCapabilities.InstallScene in renderer.descriptor.capabilities) {
-            "map renderer must declare map.install-scene"
+        val requiredCapabilities = setOf(
+            MapRendererCapabilities.InstallScene,
+            MapRendererCapabilities.ApplyDelta,
+            MapRendererCapabilities.RouteProgress,
+            MapRendererCapabilities.Markers,
+            MapRendererCapabilities.Selection,
+        )
+        require(renderer.descriptor.capabilities.containsAll(requiredCapabilities)) {
+            "full renderer probe requires install, delta, progress, markers and selection capabilities"
         }
-        require(MapRendererCapabilities.ApplyDelta in renderer.descriptor.capabilities) {
-            "map renderer must declare map.apply-delta"
-        }
-        checks += "declares-map-boundary"
+        val checks = mutableListOf("declares-full-probe-capabilities")
 
         renderer.install(scene).requireSuccess()
         checks += "installs-scene"
