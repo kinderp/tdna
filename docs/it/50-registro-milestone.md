@@ -57,7 +57,7 @@ Completati:
 
 - [x] Gradle/KMP bootstrap;
 - [x] JVM e Linux x64;
-- [x] plugin SDK;
+- [x] plugin SDK e runtime platform semantics;
 - [x] canonical routing models;
 - [x] immutable snapshots e bounded metadata;
 - [x] request/waypoint postconditions;
@@ -66,16 +66,37 @@ Completati:
 - [x] reusable conformance probe;
 - [x] architecture checker;
 - [x] CLI Lab;
-- [x] capitolo 44, scenario e report;
-- [x] CI completa;
+- [x] capitolo 44 e scenario;
+- [x] indice report giornalieri;
+- [x] CI completa verde;
 - [x] merge.
 
-### Slice C — provider-neutral MapScene
+### Slice C — review governance e contract hardening
+
+- issue [#8](https://github.com/kinderp/tdna/issues/8);
+- PR [#9](https://github.com/kinderp/tdna/pull/9);
+- stato **merged** il 17 luglio 2026;
+- merge commit `044e0773dd9afb1530db35688a00c56bfbd5eace`.
+
+Completati:
+
+- [x] due round consecutivi obbligatori nelle regole operative;
+- [x] definizione di substantive head, finding e reset;
+- [x] capitolo `06-review-e-merge.md`;
+- [x] contributor guide, agent rules e PR template allineati;
+- [x] `roadName` ed `exitNumber` bounded;
+- [x] regression test Kotlin;
+- [x] report e indici aggiornati;
+- [x] CI verde sul substantive head finale;
+- [x] due clean review round;
+- [x] merge.
+
+### Slice D — provider-neutral MapScene
 
 - issue [#7](https://github.com/kinderp/tdna/issues/7);
-- PR draft [#10](https://github.com/kinderp/tdna/pull/10);
+- PR [#10](https://github.com/kinderp/tdna/pull/10);
 - branch `agent/provider-neutral-map-scene`;
-- stato **implementation and documentation in review**.
+- stato **riallineata alla governance mergiata; CI e due review finali pendenti**.
 
 Completati o in verifica:
 
@@ -90,7 +111,7 @@ Completati o in verifica:
 - [x] progress canonico `[0, 1)`;
 - [x] architecture checker che ignora commenti/literal;
 - [x] capitolo 45, scenario e report;
-- [ ] CI finale sul substantive head;
+- [ ] CI finale sul nuovo substantive head;
 - [ ] due review round consecutivi senza finding;
 - [ ] merge.
 
@@ -101,18 +122,23 @@ Completati o in verifica:
 - [x] canonical routing contract seed;
 - [x] plugin descriptor e capability;
 - [x] fake route planner;
+- [x] review governance;
 - [x] MapScene e fake renderer implementati in PR #10;
+- [ ] merge PR #10;
 - [ ] `LocationSample` e clock;
 - [ ] GPS replay;
 - [ ] missed-exit scenario;
 - [ ] benchmark report;
 - [ ] Gradle Wrapper;
-- [ ] documentazione finale milestone;
-- [ ] merge PR #10.
+- [ ] documentazione finale milestone.
 
 ## Regole
 
 - ogni slice non banale ha issue e PR;
+- ogni PR richiede CI verde e due review round consecutivi senza finding sullo
+  stesso substantive head;
+- finding o commit sostanziali resettano il clean-review counter;
 - la chiusura registra prove e lavoro rimandato;
+- l'issue si chiude con il merge, non con la sola prontezza tecnica;
 - milestone future non autorizzano codice anticipato;
 - deliverable significa evidenza, non percentuale vaga.
