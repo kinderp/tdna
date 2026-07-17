@@ -4,13 +4,15 @@ import org.traveldna.location.contracts.LocationSampleDecision
 import org.traveldna.location.contracts.LocationSampleGate
 import org.traveldna.location.contracts.LocationSampleRejectionReason
 import org.traveldna.location.contracts.LocationSequence
-import org.traveldna.location.contracts.MonotonicInstant
 
 /**
  * Single-threaded deterministic replay state machine.
  *
  * The runner never sleeps and never reads files. It computes the playback delay
  * a scheduler would use, leaving wall-clock waiting to a future platform adapter.
+ * The first accepted sample establishes the replay baseline and therefore has
+ * zero source/playback delay even when its monotonic timestamp is an absolute
+ * device-uptime value rather than zero.
  */
 class DeterministicReplayRunner(
     val scenario: LocationReplayScenario,
@@ -44,7 +46,9 @@ class DeterministicReplayRunner(
     }
 
     fun cancel() {
-        require(state != ReplayState.Completed) { "completed replay cannot be cancelled" }
+        require(state != ReplayState.Completed && state != ReplayState.Cancelled) {
+            "completed or cancelled replay cannot be cancelled"
+        }
         state = ReplayState.Cancelled
     }
 
@@ -104,7 +108,12 @@ class DeterministicReplayRunner(
         nextIndex += 1
         val event = when (val decision = gate.evaluate(sample)) {
             is LocationSampleDecision.Accepted -> {
-                val sourceDelta = clock.advanceTo(sample.monotonicTime)
+                val sourceDelta = if (acceptedSamples == 0) {
+                    clock.reset(sample.monotonicTime)
+                    0L
+                } else {
+                    clock.advanceTo(sample.monotonicTime)
+                }
                 val playbackDelay = delayScaler.scale(sourceDelta)
                 require(totalPlaybackDelayMilliseconds <= Long.MAX_VALUE - playbackDelay) {
                     "total playback delay overflows Long"
