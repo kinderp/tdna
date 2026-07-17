@@ -208,7 +208,7 @@ private fun benchmarkRoute(sampleCount: Int): RoutePlan {
                 RouteManeuver(
                     geometryIndex = start,
                     type = if (legIndex == 0) ManeuverType.Depart else ManeuverType.Continue,
-                    position = points[start],
+                    location = points[start],
                     instruction = if (legIndex == 0) "Depart" else "Continue leg $legIndex",
                 ),
             )
