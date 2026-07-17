@@ -36,9 +36,12 @@ data class MapRenderError(
             code == MapRenderErrorCode.StaleScene ||
             code == MapRenderErrorCode.UnknownItem ||
             code == MapRenderErrorCode.InvalidDelta ||
-            code == MapRenderErrorCode.CapacityExceeded
+            code == MapRenderErrorCode.CapacityExceeded ||
+            code == MapRenderErrorCode.UnsupportedOperation
         ) {
-            require(!retryable) { "$code is not retryable without changing local state or input" }
+            require(!retryable) {
+                "$code is not retryable without changing local state, input or provider"
+            }
         }
     }
 
