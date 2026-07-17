@@ -43,6 +43,25 @@ class DeterministicReplayRunnerTest {
     }
 
     @Test
+    fun firstAcceptedSampleEstablishesReplayBaseline() {
+        val scenario = LocationReplayScenario(
+            id = "nonzero-baseline-v0",
+            playbackRate = PlaybackRate.DoubleSpeed,
+            samples = listOf(sample(0, 5_000), sample(1, 6_000)),
+        )
+        val runner = DeterministicReplayRunner(scenario)
+        runner.start()
+        val first = assertIs<ReplayEvent.Accepted>(runner.advance())
+        val second = assertIs<ReplayEvent.Accepted>(runner.advance())
+
+        assertEquals(0L, first.sourceDeltaMilliseconds)
+        assertEquals(0L, first.playbackDelayMilliseconds)
+        assertEquals(1_000L, second.sourceDeltaMilliseconds)
+        assertEquals(500L, second.playbackDelayMilliseconds)
+        assertEquals(500L, runner.summary().totalPlaybackDelayMilliseconds)
+    }
+
+    @Test
     fun rejectedSamplesDoNotMoveVirtualClock() {
         val runner = DeterministicReplayRunner(referenceScenario())
         runner.start()
@@ -74,6 +93,7 @@ class DeterministicReplayRunnerTest {
         runner.cancel()
         assertEquals(ReplayState.Cancelled, runner.state)
         assertFailsWith<IllegalArgumentException> { runner.advance() }
+        assertFailsWith<IllegalArgumentException> { runner.cancel() }
         assertFailsWith<IllegalStateException> { runner.runToEnd() }
         assertEquals(1, runner.summary().processedSamples)
     }
