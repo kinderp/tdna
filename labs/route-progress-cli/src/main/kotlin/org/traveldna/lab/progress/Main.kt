@@ -51,13 +51,21 @@ private fun runLab() {
 
     var accepted = 0
     var rejected = 0
-    var regressionReason = "none"
+    var rejectionReason = "none"
+    var boundaryLeg = -1
+    var boundaryManeuver = "none"
     positions.forEach { candidate ->
         when (val decision = tracker.accept(candidate)) {
-            is RouteProgressDecision.Accepted -> accepted += 1
+            is RouteProgressDecision.Accepted -> {
+                accepted += 1
+                if (candidate.sampleSequence.value == 2L) {
+                    boundaryLeg = decision.snapshot.activeLegIndex
+                    boundaryManeuver = decision.snapshot.upcomingManeuver?.maneuver?.type?.name ?: "none"
+                }
+            }
             is RouteProgressDecision.Rejected -> {
                 rejected += 1
-                regressionReason = decision.reason.name
+                rejectionReason = decision.reason.name
             }
         }
     }
@@ -74,17 +82,31 @@ private fun runLab() {
         overlay = overlay,
         snapshot = finalSnapshot,
     )
-    val maneuver = finalSnapshot.upcomingManeuver?.maneuver?.type?.name ?: "none"
+    val finalManeuver = finalSnapshot.upcomingManeuver?.maneuver?.type?.name ?: "none"
+
+    check(accepted == ExpectedAccepted)
+    check(rejected == ExpectedRejected)
+    check(rejectionReason == "RegressedAlongRoute")
+    check(boundaryLeg == 1)
+    check(boundaryManeuver == ManeuverType.Continue.name)
+    check(finalSnapshot.position.coordinate == RouteCoordinate(3, 0.0))
+    check(finalSnapshot.activeLegIndex == 1)
+    check(finalManeuver == ManeuverType.Arrive.name)
+    check(finalSnapshot.arrived)
+    check(delta.progress.completedGeometryIndex == 3)
+    check(delta.progress.fractionToNext == 0.0)
 
     println(
         "{\"scenario\":\"reference-route-progress-v0\"," +
             "\"accepted\":$accepted," +
             "\"rejected\":$rejected," +
-            "\"rejection\":\"$regressionReason\"," +
+            "\"rejection\":\"$rejectionReason\"," +
+            "\"boundary_leg\":$boundaryLeg," +
+            "\"boundary_maneuver\":\"$boundaryManeuver\"," +
             "\"completed_index\":${finalSnapshot.position.coordinate.completedGeometryIndex}," +
             "\"fraction\":${finalSnapshot.position.coordinate.fractionToNext}," +
             "\"active_leg\":${finalSnapshot.activeLegIndex}," +
-            "\"upcoming_maneuver\":\"$maneuver\"," +
+            "\"upcoming_maneuver\":\"$finalManeuver\"," +
             "\"arrived\":${finalSnapshot.arrived}," +
             "\"delta_index\":${delta.progress.completedGeometryIndex}}",
     )
@@ -200,6 +222,8 @@ private fun position(
     confidence = MatchConfidence.High,
 )
 
+private const val ExpectedAccepted: Int = 5
+private const val ExpectedRejected: Int = 1
 private const val BenchmarkWarmups: Int = 3
 private const val DefaultBenchmarkIterations: Int = 7
 private const val MaxBenchmarkIterations: Int = 25
