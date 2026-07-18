@@ -137,6 +137,7 @@ jobs:
             build/kotlin/missed-exit-lab.json
             build/kotlin/off-route-benchmark.json
             build/android/*.apk
+            build/android/*.json
             build/android/sha256.txt
 
       - name: Upload diagnostic output on failure
