@@ -23,9 +23,9 @@ permissions:
 
 jobs:
   foundation:
-    name: Docs, Java, Rust, Kotlin and contract tests
+    name: Docs, Java, Rust, Kotlin and Android tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
 
     steps:
       - name: Check out repository
@@ -38,6 +38,14 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+
+      - name: Install Android SDK 37
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager="${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$sdkmanager"
+          "$sdkmanager" "platforms;android-37" "build-tools;36.0.0"
 
       - name: Configure Gradle cache for the committed wrapper
         uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
@@ -98,11 +106,18 @@ jobs:
           set -o pipefail
           sh tools/tdna check-kotlin 2>&1 | tee build/kotlin-check.log
 
-      - name: Upload Kotlin Lab and benchmark observations
+      - name: Build Android Pilot 0 artifacts
+        shell: bash
+        run: |
+          mkdir -p build
+          set -o pipefail
+          sh tools/tdna check-android 2>&1 | tee build/android-check.log
+
+      - name: Upload build observations and Android APKs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: foundation-kotlin-observations
+          name: tdna-build-observations
           if-no-files-found: ignore
           retention-days: 14
           path: |
@@ -115,11 +130,13 @@ jobs:
             build/kotlin/map-matching-benchmark.json
             build/kotlin/missed-exit-lab.json
             build/kotlin/off-route-benchmark.json
+            build/android/*.apk
+            build/android/sha256.txt
 
       - name: Upload diagnostic output on failure
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: foundation-diagnostics
+          name: tdna-build-diagnostics
           if-no-files-found: ignore
           path: build/
