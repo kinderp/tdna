@@ -60,6 +60,7 @@ check_kotlin() {
 check_android() {
     say "== Android Pilot 0 shell =="
     need java
+    need python3
     need sha256sum
     check_gradle_wrapper
     gradlew --no-daemon --stacktrace \
@@ -69,6 +70,8 @@ check_android() {
         :apps:android:assembleDebugAndroidTest
     rm -rf "$BUILD_DIR/android"
     mkdir -p "$BUILD_DIR/android"
+    python3 "$ROOT/tools/check_android_pilot.py" \
+        "$ROOT" "$BUILD_DIR/android/manifest-report.json"
     app_apk=$(find "$ROOT/apps/android/build/outputs/apk/debug" -type f -name '*.apk' | sort | sed -n '1p')
     test_apk=$(find "$ROOT/apps/android/build/outputs/apk/androidTest/debug" -type f -name '*.apk' | sort | sed -n '1p')
     test -n "$app_apk" || { say "ERROR: debug APK not found"; return 1; }
@@ -76,7 +79,7 @@ check_android() {
     cp "$app_apk" "$BUILD_DIR/android/tdna-pilot0-debug.apk"
     cp "$test_apk" "$BUILD_DIR/android/tdna-pilot0-debug-androidTest.apk"
     (cd "$BUILD_DIR/android" && sha256sum ./*.apk > sha256.txt)
-    say "PASS Android APKs written under build/android"
+    say "PASS Android APKs and manifest report written under build/android"
 }
 
 run_lab() {
@@ -135,7 +138,7 @@ Commands:
   check-rust                          format and test Rust reference routing
   check-contract                      compare Java/Rust reports byte-for-byte
   check-kotlin                        test KMP contracts and navigation foundations
-  check-android                       test, lint and assemble Android Pilot 0 APKs
+  check-android                       test, lint, manifest-check and assemble Pilot 0 APKs
   check                               run the complete non-Android foundation verification
   lab build-bootstrap                 run the reproducible-build bootstrap Lab
   lab reference-routing [algorithm]   run the Java/Rust routing Lab
