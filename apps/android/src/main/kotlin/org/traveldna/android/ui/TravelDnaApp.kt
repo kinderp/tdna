@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.traveldna.android.pilot.PilotCatalog
@@ -40,7 +41,8 @@ enum class PilotScreen(val label: String) {
 @Composable
 fun TravelDnaApp() {
     var selectedName by rememberSaveable { mutableStateOf(PilotScreen.Home.name) }
-    val selected = PilotScreen.valueOf(selectedName)
+    val selected = PilotScreen.entries.firstOrNull { it.name == selectedName }
+        ?: PilotScreen.Home
 
     Scaffold(
         bottomBar = {
@@ -49,7 +51,13 @@ fun TravelDnaApp() {
                     NavigationBarItem(
                         selected = selected == screen,
                         onClick = { selectedName = screen.name },
-                        icon = { Text(screen.label.take(1), fontWeight = FontWeight.Bold) },
+                        icon = {
+                            Text(
+                                text = screen.label.take(1),
+                                modifier = Modifier.clearAndSetSemantics { },
+                                fontWeight = FontWeight.Bold,
+                            )
+                        },
                         label = { Text(screen.label) },
                     )
                 }
@@ -73,25 +81,35 @@ private fun HomeScreen(padding: PaddingValues) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-            Text("Travel DNA", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
-            Text("Pilot 0 · shell Android didattica", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Travel DNA",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                "Pilot 0 · shell Android didattica",
+                style = MaterialTheme.typography.titleMedium,
+            )
         }
         item {
             InfoCard(
                 title = "Che cosa dimostra",
-                body = "La prima APK installabile usa i contratti condivisi e dati sintetici. Non richiede posizione, rete o account.",
+                body = "La prima APK installabile usa i contratti condivisi e dati " +
+                    "sintetici. Non richiede posizione, rete o account.",
             )
         }
         item {
             InfoCard(
                 title = "Architettura",
-                body = "apps/android è il composition root. I moduli shared restano provider-neutral e non importano API Android.",
+                body = "apps/android è il composition root. I moduli shared restano " +
+                    "provider-neutral e non importano API Android.",
             )
         }
         item {
             InfoCard(
                 title = "Prossimo rischio reale",
-                body = "Dopo la shell misureremo lifecycle, permessi foreground, batteria e handoff a un navigatore esterno.",
+                body = "Dopo la shell misureremo lifecycle, permessi foreground, " +
+                    "batteria e handoff a un navigatore esterno.",
             )
         }
     }
@@ -116,7 +134,11 @@ private fun PilotCard(milestone: PilotMilestone) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(milestone.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(
+                milestone.title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
             Text(milestone.window, style = MaterialTheme.typography.labelLarge)
             Text(milestone.audience)
             Text("Risultati", fontWeight = FontWeight.Bold)
@@ -139,26 +161,29 @@ private fun DemoScreen(padding: PaddingValues) {
         item {
             InfoCard(
                 title = "LocationSample",
-                body = "sequence=${snapshot.sampleSequence}, monotonic=${snapshot.monotonicMillis} ms, " +
+                body = "sequence=${snapshot.sampleSequence}, " +
+                    "monotonic=${snapshot.monotonicMillis} ms, " +
                     "lat=${snapshot.latitude}, lon=${snapshot.longitude}",
             )
         }
         item {
             InfoCard(
                 title = "RouteCoordinate",
-                body = "geometry index=${snapshot.geometryIndex}, fraction=${snapshot.fractionToNext}",
+                body = "geometry index=${snapshot.geometryIndex}, " +
+                    "fraction=${snapshot.fractionToNext}",
             )
         }
         item {
             InfoCard(
                 title = "OffRoutePolicy",
-                body = "conferma dopo ${snapshot.requiredSuspiciousCount} evidenze e almeno " +
-                    "${snapshot.minimumSuspiciousMillis} ms nel Lab sintetico.",
+                body = "conferma dopo ${snapshot.requiredSuspiciousCount} evidenze e " +
+                    "almeno ${snapshot.minimumSuspiciousMillis} ms nel Lab sintetico.",
             )
         }
         item {
             Text(
-                "Questi valori arrivano dai contratti TDNA reali, ma non rappresentano GPS o soglie sicure per la strada.",
+                "Questi valori arrivano dai contratti TDNA reali, ma non " +
+                    "rappresentano GPS o soglie sicure per la strada.",
                 style = MaterialTheme.typography.bodySmall,
             )
         }
@@ -179,7 +204,10 @@ private fun StudyScreen(padding: PaddingValues) {
                     Text("${step.order}. ${step.title}", fontWeight = FontWeight.Bold)
                     Text(step.purpose)
                     Spacer(Modifier.height(6.dp))
-                    Text("Esercizio: ${step.repositoryExercise}", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "Esercizio: ${step.repositoryExercise}",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
             }
         }
@@ -192,7 +220,11 @@ private fun StudyScreen(padding: PaddingValues) {
 private fun InfoCard(title: String, body: String) {
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
             Spacer(Modifier.height(6.dp))
             Text(body)
         }
@@ -203,7 +235,11 @@ private fun InfoCard(title: String, body: String) {
 private fun SectionTitle(text: String) {
     Surface(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.padding(vertical = 8.dp)) {
-            Text(text, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(
+                text,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
         }
     }
 }

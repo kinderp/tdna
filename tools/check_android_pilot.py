@@ -49,6 +49,38 @@ def parse(path: Path) -> ET.Element:
         raise ValueError(f"cannot parse {path}: {error}") from error
 
 
+def validate_application_contract(root: ET.Element, context: str) -> None:
+    application = root.find("application")
+    if application is None:
+        raise ValueError(f"{context} has no application element")
+    if application.attrib.get(f"{ANDROID}allowBackup") != "false":
+        raise ValueError(f"{context} must keep android:allowBackup=false")
+
+    launcher_found = False
+    for activity in application.findall("activity"):
+        exported = activity.attrib.get(f"{ANDROID}exported")
+        for intent_filter in activity.findall("intent-filter"):
+            actions = {
+                action.attrib.get(f"{ANDROID}name")
+                for action in intent_filter.findall("action")
+            }
+            categories = {
+                category.attrib.get(f"{ANDROID}name")
+                for category in intent_filter.findall("category")
+            }
+            if (
+                "android.intent.action.MAIN" in actions
+                and "android.intent.category.LAUNCHER" in categories
+            ):
+                if exported != "true":
+                    raise ValueError(
+                        f"{context} launcher activity must remain exported=true"
+                    )
+                launcher_found = True
+    if not launcher_found:
+        raise ValueError(f"{context} has no exported launcher activity")
+
+
 def find_main_merged_manifests(root: Path) -> list[Path]:
     intermediates = root / "apps/android/build/intermediates"
     if not intermediates.exists():
@@ -74,34 +106,7 @@ def validate(root: Path) -> dict[str, object]:
             "Pilot 0 source manifest must declare no permissions: "
             + ", ".join(sorted(source_permissions))
         )
-
-    application = source_root.find("application")
-    if application is None:
-        raise ValueError("Pilot 0 source manifest has no application element")
-    if application.attrib.get(f"{ANDROID}allowBackup") != "false":
-        raise ValueError("Pilot 0 must keep android:allowBackup=false")
-
-    launcher_found = False
-    for activity in application.findall("activity"):
-        exported = activity.attrib.get(f"{ANDROID}exported")
-        for intent_filter in activity.findall("intent-filter"):
-            actions = {
-                action.attrib.get(f"{ANDROID}name")
-                for action in intent_filter.findall("action")
-            }
-            categories = {
-                category.attrib.get(f"{ANDROID}name")
-                for category in intent_filter.findall("category")
-            }
-            if (
-                "android.intent.action.MAIN" in actions
-                and "android.intent.category.LAUNCHER" in categories
-            ):
-                if exported != "true":
-                    raise ValueError("launcher activity must remain exported=true")
-                launcher_found = True
-    if not launcher_found:
-        raise ValueError("Pilot 0 source manifest has no exported launcher activity")
+    validate_application_contract(source_root, "Pilot 0 source manifest")
 
     merged_paths = find_main_merged_manifests(root)
     if not merged_paths:
@@ -109,7 +114,13 @@ def validate(root: Path) -> dict[str, object]:
 
     merged_permissions: set[str] = set()
     for path in merged_paths:
-        merged_permissions.update(declared_permissions(parse(path)))
+        merged_root = parse(path)
+        validate_application_contract(
+            merged_root,
+            f"merged debug manifest {path.relative_to(root)}",
+        )
+        merged_permissions.update(declared_permissions(merged_root))
+
     forbidden = sorted(merged_permissions & FORBIDDEN_PERMISSIONS)
     if forbidden:
         raise ValueError(
