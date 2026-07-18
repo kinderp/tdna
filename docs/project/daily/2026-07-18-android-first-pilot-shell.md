@@ -20,7 +20,7 @@ permission-free installable Jetpack Compose teaching shell.
 Android-first was selected by the maintainer on 2026-07-18 and recorded in
 `ADR-0010`.
 
-## Implemented so far
+## Implemented
 
 ### Build and module boundary
 
@@ -32,8 +32,9 @@ Android-first was selected by the maintainer on 2026-07-18 and recorded in
 - Kotlin 2.4.0 Compose compiler plugin;
 - Compose BOM 2026.06.00 and Material 3;
 - Google Maven repository;
-- conditional module include so foundation Labs can run without Android SDK;
-- Android SDK 37 installation and APK artifact collection in CI.
+- conditional app include so foundation Labs run without Android SDK;
+- hosted Android SDK 37 revision-family verification;
+- shared common-code guard against `android.*` and `androidx.*`.
 
 ### Application
 
@@ -41,27 +42,32 @@ Android-first was selected by the maintainer on 2026-07-18 and recorded in
 - light/dark Compose theme;
 - bounded four-screen navigation state;
 - Home, pilot roadmap, deterministic demo and study screens;
-- real construction of `LocationSample`, `RouteCoordinate` and `OffRoutePolicy`
-  from shared contracts;
+- real construction of `LocationSample`, `RouteCoordinate` and `OffRoutePolicy`;
 - no permission, network, storage, service or map SDK;
-- unit tests for pilot ordering/non-goals/demo ground truth;
+- unit tests for pilot ordering, non-goals and demo ground truth;
 - instrumentation Compose smoke source.
 
-### Tooling
+### Tooling and evidence
 
 - `sh tools/tdna check-android`;
-- debug and instrumentation APK copied to `build/android`;
-- SHA-256 manifest;
+- unit test, lint, debug APK and instrumentation APK build;
+- source and merged-manifest policy checker;
+- explicit rejection of location, foreground-service, notification, network,
+  Bluetooth and nearby-device permissions;
+- debug/test APK copied to `build/android`;
+- SHA-256 artifact manifest;
+- machine-readable manifest report;
 - CI upload of APKs and observations.
 
 ### Documentation
 
 - ADR-0010;
-- Android-first pilot roadmap;
+- chapters 55–58;
+- Android Pilot 0 scenario;
 - study path using official Android, Pluralsight and Manning material;
-- road-pilot protocol;
-- Android module README;
-- this indexed daily report.
+- future road-pilot protocol;
+- repository, milestone, status, Lab and report indexes;
+- Android module README.
 
 ## Pilot windows
 
@@ -80,20 +86,67 @@ plus official Android training cover the initial learning path. A physical
 Android phone is the first useful purchase only if the maintainer has no suitable
 device before Pilot 1.
 
-## Verification state
+## Development CI evidence
 
-The first Android CI run is development evidence only. Documentation and source
-may still change, so the final substantive head and clean-review counter have not
-been fixed.
+Foundation CI run `#202` passed on head
+`ba24af50092c37e2125d61c4de5b8797e3f5fcc3` before the manifest-policy hardening.
+It proved:
 
-## Known risks to validate
+```text
+foundation documentation/architecture/Java/Rust/KMP    success
+Android SDK verification                                success
+Android unit test and lint                              success
+debug APK and instrumentation APK                       success
+artifact upload                                          success
+```
 
-- AGP 9.3 / Kotlin 2.4 Compose plugin integration;
-- Android consumer resolution of current KMP JVM variants;
-- SDK 37 availability on hosted CI;
-- Android lint on permission-free shell;
-- instrumentation APK compilation;
-- current GitHub Actions duration after adding Android build.
+Artifact `8429618558`, digest
+`sha256:582c348ffbb2f4d6e12ef060f1c0a93bd06ba7c9e386f3c2e29a2a3b4ef995b2`,
+contained:
+
+```text
+tdna-pilot0-debug.apk                 11,649,284 bytes
+tdna-pilot0-debug-androidTest.apk      1,131,167 bytes
+```
+
+Recorded APK hashes:
+
+```text
+0488d6d8a33eee066885ed58bdbdd3fe4efbb2c8d363db65af673348af7ff3cf  app
+aca8022d8f27654500023705e5379853e7f6ec10a25bc8b1ad74b6ef1f71ef3c  instrumentation
+```
+
+These hashes identify that CI output. The project does not claim that separately
+built debug APKs are bit-for-bit reproducible.
+
+## Findings corrected
+
+1. CI attempted to reinstall Android packages already present on the hosted image.
+2. SDK verification assumed one platform directory name despite revisioned API 37 packages.
+3. shared common-code checks covered only `android.location`; they now reject general Android/AndroidX references.
+4. “reproducible APK” wording overstated current evidence; artifact identity is now expressed as commit plus SHA-256.
+5. the permission-free property was source-only; the build now validates source and merged manifests and publishes a report.
+
+Every substantive fix resets the clean-review counter.
+
+## Evidence still required before merge
+
+- green CI on the manifest-hardened final substantive head;
+- Android manifest report in the artifact;
+- zero unresolved threads;
+- two consecutive clean review rounds on the same SHA;
+- expected-head merge and post-merge verification.
+
+## Pilot 0 manual evidence still required after merge
+
+- emulator installation and launch;
+- physical-device installation;
+- rotation and process recreation observations;
+- light/dark theme and font scaling;
+- TalkBack traversal;
+- no-permission observation.
+
+Compilation of the instrumentation APK is not execution of the test on a device.
 
 ## Non-goals
 
@@ -107,6 +160,6 @@ been fixed.
 
 ## Next executable step
 
-Obtain Android CI evidence, correct build or architecture findings, complete all
-indexes/status records, then establish the final substantive head for two clean
-review rounds.
+Obtain a green exact-head CI with the manifest report, complete the two final
+review rounds, merge PR #26 and then perform the Pilot 0 emulator/device
+installation checklist as the next serial slice.

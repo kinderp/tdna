@@ -49,7 +49,7 @@ object PilotCatalog {
             window = "10–21 agosto 2026",
             audience = "Docente, studenti, emulatore e 1–3 telefoni",
             outcomes = listOf(
-                "APK debug riproducibile",
+                "APK debug identificata da commit e SHA-256",
                 "Jetpack Compose e composition root Android",
                 "Replay, route progress e missed-exit sintetici",
                 "Schermate collegate ai capitoli del progetto",
@@ -67,7 +67,11 @@ object PilotCatalog {
                 "Handoff al navigatore esterno",
                 "Recorder locale bounded e diagnostica redatta",
             ),
-            nonGoals = listOf("turn-by-turn di produzione", "tracking pubblico", "Android Auto"),
+            nonGoals = listOf(
+                "turn-by-turn di produzione",
+                "tracking pubblico",
+                "Android Auto",
+            ),
         ),
         PilotMilestone(
             stage = PilotStage.ClosedBeta,
@@ -85,18 +89,48 @@ object PilotCatalog {
     )
 
     val studySteps: List<StudyStep> = listOf(
-        StudyStep(1, "Kotlin idiomatico", "Leggere e modificare value object e sealed interface.", "Eseguire i test dei moduli shared."),
-        StudyStep(2, "Android e lifecycle", "Capire Activity, processo, configurazione e stato.", "Seguire MainActivity e ricreare la shell dopo rotazione."),
-        StudyStep(3, "Jetpack Compose", "UI dichiarativa, state hoisting ed effetti.", "Aggiungere una card senza introdurre stato globale."),
-        StudyStep(4, "Coroutines e Flow", "Cancellazione e structured concurrency.", "Rileggere replay e reroute executor."),
-        StudyStep(5, "Test Android", "Separare unit, UI compile-smoke e device test.", "Estendere PilotCatalogTest e lo smoke test Compose."),
-        StudyStep(6, "Permessi e foreground service", "Prepararsi al Pilot 1 senza anticiparlo.", "Scrivere una threat checklist prima del codice GPS."),
+        StudyStep(
+            1,
+            "Kotlin idiomatico",
+            "Leggere e modificare value object e sealed interface.",
+            "Eseguire i test dei moduli shared.",
+        ),
+        StudyStep(
+            2,
+            "Android e lifecycle",
+            "Capire Activity, processo, configurazione e stato.",
+            "Seguire MainActivity e ricreare la shell dopo rotazione.",
+        ),
+        StudyStep(
+            3,
+            "Jetpack Compose",
+            "UI dichiarativa, state hoisting ed effetti.",
+            "Aggiungere una card senza introdurre stato globale.",
+        ),
+        StudyStep(
+            4,
+            "Coroutines e Flow",
+            "Cancellazione e structured concurrency.",
+            "Rileggere replay e reroute executor.",
+        ),
+        StudyStep(
+            5,
+            "Test Android",
+            "Separare unit, UI compile-smoke e device test.",
+            "Estendere PilotCatalogTest e lo smoke test Compose.",
+        ),
+        StudyStep(
+            6,
+            "Permessi e foreground service",
+            "Prepararsi al Pilot 1 senza anticiparlo.",
+            "Scrivere una threat checklist prima del codice GPS.",
+        ),
     )
 
     val optionalPurchases: List<String> = listOf(
         "Nessun nuovo corso: Manning e Pluralsight coprono il percorso iniziale.",
-        "Un telefono Android reale è necessario prima del Pilot 1 se non ne possiedi uno adatto.",
-        "Supporto auto stabile e alimentazione USB sono utili solo per field test con un passeggero-osservatore.",
+        "Un telefono Android reale serve prima del Pilot 1 se non ne possiedi uno adatto.",
+        "Supporto auto e alimentazione USB servono solo ai field test con osservatore.",
         "Play Console, SDK mappe a pagamento e hardware LoRa non servono al Pilot 0.",
     )
 
