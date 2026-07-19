@@ -29,9 +29,10 @@ in inglese e più sintetici.
 | Capitolo | Tema |
 | --- | --- |
 | [55](55-roadmap-android-first-e-pilot.md) | Roadmap Pilot 0/1/2, stack, APK e requisiti. |
-| [56](56-percorso-studio-android-first.md) | Percorso di studio Manning/Pluralsight/ufficiale. |
+| [56](56-percorso-studio-android-first.md) | Percorso narrativo di studio Manning/Pluralsight/ufficiale. |
 | [57](57-protocollo-pilot-stradale-android.md) | Protocollo del futuro Pilot 1 su strada. |
 | [58](58-shell-android-pilot0.md) | Prima shell Compose, build, stato e test. |
+| **[59](59-materiali-didattici-e-acquisti-pilot-android.md)** | **Guida unica con link diretti, ordine di studio e acquisti per APK/Pilot.** |
 
 Decisione: [ADR-0010 Android-first](../adr/0010-android-first-pilot-sequence.md).
 
