@@ -30,6 +30,22 @@ contratti shared già testati
 
 La shell non contiene ancora GPS, mappe reali, backend, chat o diario operativo.
 
+## Guida unica per studio, pilot e acquisti
+
+Il riferimento principale per prepararsi e pianificare le prove è:
+
+- **[Materiali didattici con link diretti e roadmap acquisti dei pilot Android](docs/it/59-materiali-didattici-e-acquisti-pilot-android.md)**
+
+Il documento raccoglie in un solo posto:
+
+- libri Manning con link diretto;
+- corsi Pluralsight con link diretto;
+- corsi e documentazione ufficiale gratuita;
+- ordine di studio collegato alle APK `0.1`–`0.8`;
+- esercizi da svolgere nel repository;
+- hardware, account e acquisti per Pilot 0, Pilot 1 e Pilot 2;
+- cose da non comprare o studiare troppo presto.
+
 ## Roadmap pilot
 
 | Pilot | Finestra di pianificazione | Risultato |
@@ -40,6 +56,7 @@ La shell non contiene ancora GPS, mappe reali, backend, chat o diario operativo.
 
 Approfondimenti:
 
+- [Materiali didattici e acquisti per fase](docs/it/59-materiali-didattici-e-acquisti-pilot-android.md)
 - [Roadmap Android-first, stack e sequenza APK](docs/it/55-roadmap-android-first-e-pilot.md)
 - [Percorso di studio Manning/Pluralsight/ufficiale](docs/it/56-percorso-studio-android-first.md)
 - [Protocollo del futuro pilot su strada](docs/it/57-protocollo-pilot-stradale-android.md)
@@ -104,6 +121,7 @@ La APK instrumentation compilata non equivale a un test eseguito su dispositivo.
 56  percorso di studio
 57  protocollo stradale
 58  shell Android Pilot 0
+59  materiali linkati e acquisti per fase
 ```
 
 Indice completo: [docs/README.md](docs/README.md).
@@ -111,7 +129,7 @@ Indice completo: [docs/README.md](docs/README.md).
 ## Cosa studiare adesso
 
 Con Manning e Pluralsight non serve acquistare un altro corso generalista.
-L'ordine consigliato è:
+L'ordine minimo consigliato è:
 
 ```text
 Kotlin idiomatico
@@ -123,9 +141,11 @@ Kotlin idiomatico
 -> permessi e foreground service solo prima del Pilot 1
 ```
 
+Link, priorità, esercizi e acquisti sono nella
+**[guida didattica e roadmap acquisti](docs/it/59-materiali-didattici-e-acquisti-pilot-android.md)**.
+
 Il primo eventuale acquisto utile è un telefono Android reale, non un altro
-corso. Dettagli e corsi specifici sono nel
-[percorso di studio](docs/it/56-percorso-studio-android-first.md).
+corso.
 
 ## Laboratori della fondazione
 
@@ -145,6 +165,7 @@ prove di affidabilità su strada.
 
 ## Da dove iniziare
 
+- [Guida didattica Android e acquisti](docs/it/59-materiali-didattici-e-acquisti-pilot-android.md)
 - [Guida alla lettura](docs/it/03-guida-lettura-documentazione.md)
 - [Regole operative](docs/it/00-regole-operative.md)
 - [Review e merge](docs/it/06-review-e-merge.md)
