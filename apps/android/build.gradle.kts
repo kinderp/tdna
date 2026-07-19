@@ -1,9 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    // Kotlin Gradle Plugin 2.4.0 is already loaded by the root KMP/JVM plugin declarations.
-    // Request it without a version so Gradle reuses that classpath entry instead of trying
-    // to resolve a second versioned marker.
-    id("org.jetbrains.kotlin.android")
     alias(libs.plugins.compose.compiler)
 }
 
@@ -45,10 +41,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-}
-
-kotlin {
-    jvmToolchain(21)
 }
 
 dependencies {
