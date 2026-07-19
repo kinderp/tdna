@@ -115,18 +115,9 @@ Android Automotive OS
     packaging e test separati
 ```
 
-Sul display auto non devono comparire:
-
-- feed sociale;
-- chat libera o liste lunghe;
-- fotografie e gallerie;
-- profili completi;
-- diario da modificare;
-- shopping o pagamenti complessi;
-- gestione account;
-- inserimento libero di testo;
-- configurazione articolata dell'itinerario;
-- diagnostica tecnica completa.
+Sul display auto non devono comparire feed sociale, chat libera, gallerie, profili
+completi, diario da modificare, shopping complesso, account management, testo
+libero o configurazione articolata dell'itinerario.
 
 Queste funzioni restano sul telefono o sono disponibili soltanto quando la policy e
 lo stato parked lo consentono.
@@ -163,8 +154,8 @@ I nomi sono candidati di roadmap, non file già esistenti.
 
 ## Contratto driver-safe della v0.3
 
-La v0.3 deve rendere replay e route progress interattivi nell'app mobile, ma deve
-anche produrre uno stato riutilizzabile. Nome provvisorio:
+La v0.3 deve rendere replay e route progress interattivi nell'app mobile e produrre
+uno stato riutilizzabile. Nome provvisorio:
 
 ```kotlin
 DriverJourneySnapshot
@@ -186,16 +177,8 @@ progress
 rerouting/degraded state
 ```
 
-Lo snapshot deve essere:
-
-- immutabile;
-- provider-neutral;
-- serializzabile o trasformabile in evidenza deterministica;
-- privo di tipi Compose, Android framework e Car App Library;
-- bounded;
-- sicuro da presentare a renderer con capacità differenti.
-
-Non deve importare:
+Lo snapshot deve essere immutabile, provider-neutral, bounded e trasformabile in
+evidenza deterministica. Non deve importare:
 
 ```text
 androidx.car.app
@@ -211,8 +194,6 @@ NavigationTemplate
 Una futura Navigation app deve poter simulare la navigazione quando l'host richiama
 `NavigationManagerCallback.onAutoDriveEnabled()`.
 
-Il replay deterministico della v0.3 può diventare la sorgente di questa modalità:
-
 ```text
 AUTO_DRIVE
 -> fixture sintetica versionata
@@ -224,24 +205,20 @@ AUTO_DRIVE
 -> Trip/Step/Destination update
 ```
 
-La modalità AUTO_DRIVE futura:
-
-- usa dati sintetici;
-- produce sempre lo stesso esito;
-- non richiede una guida reale;
-- resta distinta da evidenza su veicolo e strada;
-- non autorizza la categoria Navigation prima dei relativi gate.
+La modalità AUTO_DRIVE futura usa dati sintetici, produce un esito ripetibile e
+resta distinta da evidenza su veicolo e strada. Non autorizza la categoria
+Navigation prima dei relativi gate.
 
 ## Roadmap aggiornata
 
 ### Pilot 0 v0.3 — replay/progress mobile e contratto condiviso
 
-- controlli start, pausa, step, reset e velocità;
+- start, pausa, step, reset e velocità;
 - fixture sintetica nella schermata Demo;
 - campione accettato/rifiutato;
 - map matching e route progress dai moduli shared;
 - timeline diagnostica bounded;
-- stato lifecycle documentato;
+- lifecycle documentato;
 - `DriverJourneySnapshot` o contratto equivalente;
 - nessuna dipendenza Car App Library;
 - nessun GPS o permesso reale.
@@ -252,7 +229,7 @@ La modalità AUTO_DRIVE futura:
 - conferma missed-exit;
 - reroute deterministico;
 - loading/error/degraded state;
-- eventi e messaggi brevi compatibili con una futura car experience;
+- messaggi brevi compatibili con una futura car experience;
 - nessuna guida reale.
 
 ### Pilot 0 v0.5 — navigatori esterni
@@ -269,8 +246,11 @@ Slice separata, successiva ai contratti driver-safe:
 
 - Car App Library solo nel modulo Android dedicato;
 - `CarAppService` e `Session` minimi;
-- dichiarazione POI soltanto nel prototipo/spike;
-- template statico con dati sintetici;
+- categoria POI soltanto nel prototipo;
+- `PlaceListMapTemplate` come baseline iniziale;
+- mappa resa dall'host, senza introdurre MapLibre nello spike;
+- permesso manifest `androidx.car.app.MAP_TEMPLATES` nel prototipo;
+- contenuto sintetico, limiti lista e metadati distanza verificati;
 - connessione DHU locale;
 - day/night, touch e rotary smoke;
 - nessuna pubblicazione e nessuna categoria Navigation.
@@ -303,26 +283,34 @@ Entra soltanto dopo evidence gate dedicati:
 - test su veicolo e field audit;
 - quality review checklist e distribuzione separata.
 
-## Template
+## Template e mappa
 
-La scelta esatta va ricontrollata contro la versione Car App Library adottata.
-Direzione corrente:
+### Baseline POI
 
-### POI
+La prima scelta è `PlaceListMapTemplate` perché mostra una lista di luoghi insieme
+a una mappa resa dall'host. Questo consente di testare categoria, contenuto e
+lifecycle senza aggiungere un SDK cartografico.
 
-```text
-MapWithContentTemplate
-PlaceListMapTemplate, se ancora appropriato e supportato
-ListTemplate
-PaneTemplate
-MessageTemplate
+Il prototipo deve dichiarare:
+
+```xml
+<uses-permission android:name="androidx.car.app.MAP_TEMPLATES" />
 ```
+
+Le righe devono rispettare content limit, numero di linee, marker e distanza
+richiesti dal template corrente.
+
+### Fase con mappa fornita dall'app
+
+`MapWithContentTemplate` entra soltanto quando TDNA possiede un renderer di mappa e
+ha scelto una versione Car API compatibile. Richiede anch'esso il permesso template
+appropriato e non è necessario per il primo spike POI.
 
 ### Navigation futura
 
 ```text
 NavigationTemplate
-MapWithContentTemplate
+MapWithContentTemplate, quando applicabile
 ```
 
 Template deprecati non devono essere introdotti copiando esempi vecchi.
@@ -341,24 +329,18 @@ telefono
 Android Auto
 -> esperienza già pronta
 -> azioni brevi
--> messaggio per completare sul telefono quando necessario e sicuro
+-> richiesta CarContext che presenta il consenso sul telefono, quando necessaria
 ```
 
-Sulle versioni Android in cui la head unit non può accettare il permesso runtime,
-l'app deve guidare l'utente al telefono senza indurlo a guardarlo durante la guida.
+Il pilot preferisce completare setup e consenso prima della partenza. L'utente non
+deve essere indotto a guardare il telefono durante la guida.
 
 ## Audio e voce
 
-La futura guida vocale Navigation deve:
-
-- richiedere audio focus;
-- usare `USAGE_ASSISTANCE_NAVIGATION_GUIDANCE`;
-- usare un focus transitorio compatibile con il ducking;
-- fermarsi quando l'host termina la navigazione;
-- non trasformare chat, contenuti sociali o opportunità in falsi prompt di guida.
-
-Le azioni vocali e gli intent richiesti dalla quality policy vigente devono essere
-verificati prima della distribuzione.
+La futura guida vocale Navigation deve richiedere audio focus, usare
+`USAGE_ASSISTANCE_NAVIGATION_GUIDANCE`, adottare un focus transitorio compatibile
+con il ducking e fermarsi quando l'host termina la navigazione. Chat o opportunità
+sociali non possono usare il canale come falsi prompt di guida.
 
 ## Testing
 
@@ -369,16 +351,8 @@ Dimostra app mobile, Compose e instrumentation. Non mostra Android Auto.
 ### Desktop Head Unit
 
 Il DHU emula una head unit Android Auto su Windows, macOS o Linux. La futura suite
-deve verificare:
-
-- apertura della car app;
-- template e contenuti;
-- touch e rotary;
-- giorno/notte;
-- dimensioni e aspect ratio differenti;
-- navigation/audio focus quando applicabili;
-- AUTO_DRIVE nella Navigation beta;
-- screenshot e log bounded.
+verifica apertura, template, touch, rotary, giorno/notte, aspect ratio, focus quando
+applicabile, screenshot e log bounded.
 
 ### Android Automotive OS emulator
 
@@ -394,18 +368,17 @@ sostituisce il field test di batteria, usabilità e sicurezza.
 
 Prima di una submission car:
 
-- categoria realmente supportata;
-- contenuto coerente con la categoria;
-- ripristino dello stato dopo rilancio;
-- caricamento nei limiti correnti, oggi documentato entro 10 secondi per le
-  categorie car optimized applicabili;
+- categoria realmente supportata e contenuto coerente;
+- stato ripristinato quanto più possibile dopo rilancio;
+- caricamento entro il limite corrente, oggi 10 secondi per le categorie
+  car-optimized applicabili;
 - contrasto e tema chiaro/scuro quando personalizzati;
-- screenshot reale e non alterato dell'esperienza auto;
+- screenshot reale, non alterato e ad alta risoluzione;
 - task flow brevi;
 - nessuna funzione non consentita durante la guida;
-- checklist categoria-specifica completata;
-- testing DHU e, quando applicabile, Automotive OS;
-- review manuale Google Play considerata nel piano di release.
+- checklist categoria-specifica;
+- DHU e, quando applicabile, Automotive OS;
+- review manuale Google Play nel piano di release.
 
 La quality policy è esterna e può cambiare. I numeri presenti sono una fotografia
 del 19 luglio 2026, non un contratto permanente.
@@ -413,22 +386,20 @@ del 19 luglio 2026, non un contratto permanente.
 ## Packaging e distribuzione
 
 Per i primi spike è consigliato evitare di bloccare l'APK di produzione con la
-review automotive. La decisione concreta su application ID, product flavor o
-modulo separato viene presa nella slice automotive readiness.
+review automotive. La scelta fra application ID, product flavor o modulo separato
+viene presa nella slice automotive readiness.
 
 ```text
 mobile production app
     nessuna categoria car finché non pronta
 
 automotive prototype/internal flavor
-    categoria POI
+    categoria POI + MAP_TEMPLATES
     distribuzione interna
 
 Automotive OS app
     artifact separato
 ```
-
-Non viene ancora scelta definitivamente la struttura Gradle.
 
 ## Rischi e contromisure
 
@@ -437,8 +408,9 @@ Non viene ancora scelta definitivamente la struttura Gradle.
 | UI mobile proiettata sulla car | Renderer Car App Library separato. |
 | Categoria Navigation dichiarata presto | POI-first e gate espliciti. |
 | Android types nel core | Snapshot provider-neutral e architecture check. |
+| SDK mappa anticipato | `PlaceListMapTemplate` host-rendered nello spike. |
 | Feature social distraenti | Allowlist delle funzioni auto. |
-| Permission flow sulla head unit | Setup sul telefono e messaggi safe. |
+| Permission flow sulla head unit | Setup sul telefono e `CarContext` quando necessario. |
 | Test emulatore scambiato per car evidence | DHU/AAOS/vehicle evidence separata. |
 | Policy Google cambia | Recheck datato prima di ogni slice/release. |
 | Review car blocca release mobile | Prototipo/flavor/package separato da decidere. |
@@ -460,6 +432,7 @@ Non viene ancora scelta definitivamente la struttura Gradle.
 - App Library: <https://developer.android.com/training/cars/apps/library>
 - POI: <https://developer.android.com/training/cars/apps/poi>
 - Navigation: <https://developer.android.com/training/cars/apps/navigation>
+- Permessi: <https://developer.android.com/training/cars/apps/library/request-permissions>
 - Android Auto: <https://developer.android.com/training/cars/platforms/android-auto>
 - Desktop Head Unit: <https://developer.android.com/training/cars/testing/dhu>
 - Android Automotive OS: <https://developer.android.com/training/cars/apps/automotive-os>
