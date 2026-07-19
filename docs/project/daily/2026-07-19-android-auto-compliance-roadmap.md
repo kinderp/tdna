@@ -43,6 +43,11 @@ The car experience may show stops, saved places and brief POI information, then
 handoff to an external navigator. TDNA remains a companion and does not claim
 turn-by-turn authority.
 
+The initial readiness spike prefers `PlaceListMapTemplate`, which uses a map
+rendered by the host and avoids introducing MapLibre or another map renderer. The
+prototype declares `androidx.car.app.MAP_TEMPLATES` and validates the template's
+content limits and distance metadata.
+
 ### Navigation later
 
 The category:
@@ -83,10 +88,13 @@ No layer substitutes for the next.
 ## Documentation delivered
 
 - ADR-0011: Android Auto POI-first and separate car surfaces;
-- chapter 61: categories, architecture, roadmap, templates, permissions, voice,
+- chapter 61: categories, architecture, POI template baseline, permissions, voice,
   testing, packaging, risks and quality gates;
 - chapter 55 rewritten to integrate v0.3/v0.4, automotive readiness, Pilot 1 POI
   and later Navigation Beta;
+- chapter 25 aligned with external-navigation-first and POI-first decisions;
+- chapter 57 extended with an optional Android Auto POI field subprotocol,
+  prerequisites, scenarios and stop conditions;
 - root and documentation indexes;
 - milestone register and development status;
 - documentation status with a distinct `Decision-backed` state;
@@ -105,10 +113,10 @@ Pilot 0 v0.5
     external navigator adapters
 
 Automotive readiness
-    Car App Library POI prototype + DHU
+    PlaceListMapTemplate POI prototype + DHU
 
 Pilot 1
-    foreground companion + external navigator + POI car surface
+    foreground companion + external navigator + optional POI car surface
 
 Internal Navigation Beta
     Navigation category + guidance + AUTO_DRIVE + voice + car quality review
