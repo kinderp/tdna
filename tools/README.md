@@ -13,13 +13,14 @@ sh tools/tdna COMMAND
 | `doctor` | Java/Python/Rust/Wrapper/Android SDK/global Gradle status. |
 | `check-gradle-wrapper` | Wrapper version and checksum policy. |
 | `check-ci-actions` | Immutable reviewed GitHub Action SHAs. |
+| `check-android-build-policy` | Mixed Android/KMP plugin IDs, version refs and root classpath contract. |
 | `check-docs` | Markdown links and fences. |
 | `check-architecture` | Shared Kotlin source boundaries. |
 | `check-java` | Java routing. |
 | `check-rust` | Rust routing. |
 | `check-contract` | Java/Rust byte report equality. |
 | `check-kotlin` | Foundation KMP tests/Labs without Android SDK. |
-| `check-android` | Android unit, lint, debug APK and instrumentation APK build. |
+| `check-android` | Android policy, unit tests, lint, manifest guard and APK builds. |
 | `check` | Complete non-Android foundation verification. |
 
 ## Android
@@ -33,14 +34,21 @@ Build Tools 36.0.0
 ```
 
 ```bash
+sh tools/tdna check-android-build-policy
 sh tools/tdna check-android
 ```
+
+The policy check runs before Gradle and requires the Android application,
+Compose compiler, Kotlin Multiplatform and Kotlin JVM plugin families to remain
+preloaded together in the root `plugins` block. This is a tested classloader
+contract of the mixed Android/KMP build, not cosmetic centralization.
 
 Outputs:
 
 ```text
 build/android/tdna-pilot0-debug.apk
 build/android/tdna-pilot0-debug-androidTest.apk
+build/android/manifest-report.json
 build/android/sha256.txt
 ```
 
@@ -56,7 +64,10 @@ emulator. A green build is not road evidence.
 ```
 
 so deterministic shared work remains accessible without installing the Android
-SDK. Android commands include the app by default.
+SDK. Android commands include the app by default. The Android/Compose plugin
+markers remain declared `apply false` at the root so they share a compatible
+classloader with the Kotlin plugin families; excluding the Android subproject
+still prevents Android tasks from entering foundation commands.
 
 ## Generated outputs
 
