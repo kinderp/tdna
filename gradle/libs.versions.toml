@@ -1,6 +1,6 @@
 [versions]
-kotlin = "2.4.0"
-agp = "9.1.0"
+kotlin = "2.4.10"
+agp = "9.1.1"
 compose-bom = "2026.06.00"
 activity-compose = "1.13.0"
 androidx-test = "1.7.0"
@@ -22,6 +22,5 @@ junit4 = { module = "junit:junit", version.ref = "junit4" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
