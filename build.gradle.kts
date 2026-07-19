@@ -1,7 +1,9 @@
 plugins {
-    // Android-only plugins are resolved inside apps/android. Keeping them out of
-    // the root plugin block preserves the foundation-only Gradle graph when the
-    // Android module is excluded with -Ptdna.includeAndroid=false.
+    // Keep the Android, Compose and Kotlin plugin families in the same root
+    // classloader. This is required by the mixed Android/KMP build so AGP's
+    // built-in Kotlin integration can see the matching AGP APIs.
+    alias(libs.plugins.android.application) apply false
+    alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.jvm) apply false
 }
